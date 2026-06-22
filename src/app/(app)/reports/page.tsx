@@ -73,6 +73,14 @@ type SyncCheckState = {
   message: string;
 };
 
+const SYNC_TABLE_LABELS: Record<string, string> = {
+  inventory_items: "Inventory",
+  master_boms: "BOMs",
+  master_bom_lines: "BOM lines",
+  packing_templates: "Packing Templates",
+  packing_template_lines: "Packing Template lines"
+};
+
 export default function ReportsPage() {
   const { inventoryItems, productionJobs, stockTransactions, products, productBomLines, activityLogs, inventoryError, freshStartReset, restoreFullBackup } = useApp();
   const [activeFilter, setActiveFilter] = useState<"week" | "month">("week");
@@ -334,7 +342,7 @@ export default function ReportsPage() {
     if (!supabaseConnected) {
       setSyncCheck({
         status: "failed",
-        message: "Supabase env vars are missing. Data is local only and will not sync across devices."
+        message: "Vercel Supabase env vars are missing. Data is local only and will not sync across devices."
       });
       return;
     }
@@ -360,7 +368,7 @@ export default function ReportsPage() {
 
       setSyncCheck({
         status: "connected",
-        message: results.map((result) => `${result.table} ${result.count ?? 0}`).join(" • ")
+        message: results.map((result) => `${SYNC_TABLE_LABELS[result.table] ?? result.table}: ${result.count ?? 0}`).join(" • ")
       });
     } catch (error) {
       setSyncCheck({
@@ -428,7 +436,7 @@ export default function ReportsPage() {
           onClick={runSyncCheck}
           disabled={syncCheck.status === "checking"}
         >
-          {syncCheck.status === "checking" ? "Checking..." : "Check Supabase Sync"}
+          {syncCheck.status === "checking" ? "Checking..." : "Check Live Sync"}
         </Button>
         <p className={syncCheck.status === "failed" ? "mt-2 text-[11.5px] leading-5 text-error" : "mt-2 text-[11.5px] leading-5 text-on-surface-variant"}>
           {syncCheck.message}
