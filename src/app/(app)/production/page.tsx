@@ -41,13 +41,7 @@ export default function ProductionPage() {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 3);
 
-    return productionLogs.length > 0
-      ? productionLogs
-      : [
-          { id: "sample-1", actorName: "Admin", action: "Plan #PRD-2026-988 duplicated as Draft", createdAt: new Date().toISOString() },
-          { id: "sample-2", actorName: "Staff", action: "Plan #PRD-2026-597 moved to Process", createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString() },
-          { id: "sample-3", actorName: "Admin", action: "Plan #PRD-2026-933 archived", createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() }
-        ];
+    return productionLogs;
   }, [activityLogs]);
 
   return (
@@ -116,14 +110,18 @@ export default function ProductionPage() {
       <section className="mt-4 rounded-lg border border-outline-variant/25 bg-surface-container p-3 pb-4">
         <h3 className="text-[14px] font-semibold text-white">Recent updates</h3>
         <div className="mt-2 space-y-2">
-          {recentUpdates.map((log) => (
-            <div key={log.id} className="border-t border-outline-variant/15 pt-2 first:border-t-0 first:pt-0">
-              <p className="truncate text-[12.5px] font-medium text-on-surface">{log.action}</p>
-              <p className="mt-0.5 text-[11.5px] text-on-surface-variant">
-                {log.actorName} {"\u2022"} {formatRelativeTime(log.createdAt)}
-              </p>
-            </div>
-          ))}
+          {recentUpdates.length > 0 ? (
+            recentUpdates.map((log) => (
+              <div key={log.id} className="border-t border-outline-variant/15 pt-2 first:border-t-0 first:pt-0">
+                <p className="truncate text-[12.5px] font-medium text-on-surface">{log.action}</p>
+                <p className="mt-0.5 text-[11.5px] text-on-surface-variant">
+                  {log.actorName} {"\u2022"} {formatRelativeTime(log.createdAt)}
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="text-[12.5px] text-on-surface-variant">No recent production updates.</p>
+          )}
         </div>
       </section>
     </AppShell>

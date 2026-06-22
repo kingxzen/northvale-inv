@@ -83,12 +83,6 @@ export default function InventoryPage() {
   }, [inventoryItems, activeItemsList, searchQuery, activeFilter, statusFilter, sortAsc, showArchived]);
 
   const recentUpdates = useMemo(() => {
-    const fallback = [
-      { action: "Sodium Lauryl Ether Sulfate adjusted to 12 kg", actorName: "Admin", createdAt: "2026-06-22T09:42:00+08:00" },
-      { action: "500ml Bottle stock in +500 pcs", actorName: "Staff", createdAt: "2026-06-21T15:12:00+08:00" },
-      { action: "Keeva Airzen Lavender copied", actorName: "Admin", createdAt: "2026-06-21T09:20:00+08:00" }
-    ];
-
     const inventoryLogs = activityLogs
       .filter((log) => log.entityType === "inventory_item")
       .map((log) => {
@@ -104,7 +98,7 @@ export default function InventoryPage() {
         };
       });
 
-    return [...inventoryLogs, ...fallback]
+    return inventoryLogs
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 3);
   }, [activityLogs, inventoryItems]);
@@ -335,17 +329,21 @@ export default function InventoryPage() {
           </Link>
         </div>
         <div className="mt-2 overflow-hidden rounded-lg border border-outline-variant/25 bg-surface-container/70">
-          {recentUpdates.map((update, index) => (
-            <div
-              key={`${update.action}-${update.createdAt}-${index}`}
-              className="border-b border-outline-variant/15 px-3 py-2 last:border-b-0"
-            >
-              <p className="truncate text-[12.5px] font-medium leading-4 text-on-surface">{update.action}</p>
-              <p className="mt-0.5 text-[11.5px] leading-4 text-on-surface-variant">
-                {update.actorName} {"\u2022"} {formatRelativeTime(update.createdAt)}
-              </p>
-            </div>
-          ))}
+          {recentUpdates.length > 0 ? (
+            recentUpdates.map((update, index) => (
+              <div
+                key={`${update.action}-${update.createdAt}-${index}`}
+                className="border-b border-outline-variant/15 px-3 py-2 last:border-b-0"
+              >
+                <p className="truncate text-[12.5px] font-medium leading-4 text-on-surface">{update.action}</p>
+                <p className="mt-0.5 text-[11.5px] leading-4 text-on-surface-variant">
+                  {update.actorName} {"\u2022"} {formatRelativeTime(update.createdAt)}
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="px-3 py-3 text-[12.5px] text-on-surface-variant">No recent inventory updates.</p>
+          )}
         </div>
       </section>
     </AppShell>

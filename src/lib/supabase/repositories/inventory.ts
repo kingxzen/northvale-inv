@@ -175,3 +175,45 @@ export async function importLocalInventoryToSupabase(items: (InventoryItem & { i
 
   return { added, skipped, updated: 0 };
 }
+
+export async function restoreInventoryToSupabase(
+  items: (InventoryItem & { isArchived?: boolean })[],
+  mode: "safe-merge" | "full-after-fresh-start"
+): Promise<InventoryImportSummary & { items: (InventoryItem & { isArchived?: boolean })[] }> {
+  const current = await listInventoryItemsFromSupabase();
+  if (!current.configured) throw new Error("Supabase is not configured.");
+
+  const byKey = new Map<string, InventoryItem & { isArchived?: boolean }>();
+  current.items.forEach((item) => {
+    byKey.set(item.id.trim().toLowerCase(), item);
+    byKey.set(item.sku.trim().toLowerCase(), item);
+    byKey.set(item.name.trim().toLowerCase(), item);
+  });
+
+  let added = 0;
+  let skipped = 0;
+  let updated = 0;
+
+  for (const item of items) {
+    const match = byKey.get(item.id.trim().toLowerCase())
+      ?? byKey.get(item.sku.trim().toLowerCase())
+      ?? byKey.get(item.name.trim().toLowerCase());
+
+    if (match && mode === "safe-merge") {
+      skipped += 1;
+      continue;
+    }
+
+    if (match) {
+      await updateInventoryItemInSupabase(match.id, item);
+      updated += 1;
+      continue;
+    }
+
+    await createInventoryItemInSupabase(item);
+    added += 1;
+  }
+
+  const refreshed = await listInventoryItemsFromSupabase();
+  return { added, skipped, updated, items: refreshed.items };
+}

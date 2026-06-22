@@ -1,11 +1,15 @@
 .next
 node_modules
+.env
 .env.local
 .env*.local
 .vercel
 .agents
 .next-*.log
 *.zip
+*.backup.json
+*backup*.json
+northvale-inv-backup*.json
 dist
 coverage
 *.tsbuildinfo

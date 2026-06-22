@@ -25,10 +25,58 @@ import {
   InventorySupabaseError,
   isSupabaseConfigured,
   listInventoryItemsFromSupabase,
+  restoreInventoryToSupabase,
   updateInventoryItemInSupabase,
   type InventoryImportSummary
 } from "@/lib/supabase/repositories/inventory";
-import { runFreshStartResetAndImport, type FreshStartResult } from "@/lib/fresh-start";
+import {
+  getMasterBoms,
+  getPackingTemplates,
+  getProductBomAssignments,
+  getQuickOrders,
+  saveMasterBoms,
+  savePackingTemplates,
+  saveProductBomAssignments,
+  saveQuickOrders
+} from "@/lib/operations-store";
+import { restoreBomPackingToSupabase } from "@/lib/supabase/repositories/bom-packing";
+import { runFreshStartReset, type FreshStartResult } from "@/lib/fresh-start";
+
+export type RestoreMode = "safe-merge" | "full-after-fresh-start";
+
+export type BackupRestorePayload = {
+  data?: {
+    inventoryItems?: (InventoryItem & { isArchived?: boolean })[];
+    products?: Product[];
+    productBomLines?: ProductBomLine[];
+    bomLibrary?: unknown[];
+    productBomAssignments?: unknown[];
+    packingTemplates?: unknown[];
+    productionPlans?: ProductionJob[];
+    quickOrders?: unknown[];
+    stockTransactions?: StockTransaction[];
+    activityLogs?: ActivityLog[];
+  };
+};
+
+export type BackupRestoreSummary = {
+  inventoryAdded: number;
+  inventorySkipped: number;
+  inventoryUpdated: number;
+  bomPackingSkipped: number;
+  errors: string[];
+  restored: {
+    inventory: number;
+    boms: number;
+    bomLines: number;
+    packingTemplates: number;
+    packingLines: number;
+    production: number;
+    quickOrders: number;
+    transactions: number;
+    logs: number;
+  };
+};
 
 interface AppContextType {
   inventoryItems: (InventoryItem & { isArchived?: boolean })[];
@@ -51,7 +99,8 @@ interface AppContextType {
   refreshInventoryItems: () => Promise<void>;
   importLocalInventoryBackup: () => Promise<InventoryImportSummary>;
   exportInventoryBackup: () => string;
-  freshStartResetAndImport: () => Promise<FreshStartResult>;
+  freshStartReset: () => Promise<FreshStartResult>;
+  restoreFullBackup: (backup: BackupRestorePayload, mode: RestoreMode) => Promise<BackupRestoreSummary>;
   
   // Product actions
   addProduct: (product: Omit<Product, "id">, bomLines: Omit<ProductBomLine, "id" | "productId">[]) => Product;
@@ -91,6 +140,29 @@ function safeParseArray<T>(value: string | null, fallback: T[]): T[] {
   } catch {
     return fallback;
   }
+}
+
+function recordKeys(value: unknown) {
+  if (!value || typeof value !== "object") return [];
+  const record = value as Record<string, unknown>;
+  return ["id", "sku", "name", "productId", "referenceNo"]
+    .map((key) => record[key])
+    .filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0)
+    .map((entry) => entry.trim().toLowerCase());
+}
+
+function mergeMissingRecords<T>(current: T[], incoming: T[]) {
+  const existing = new Set(current.flatMap(recordKeys));
+  const merged = [...current];
+
+  incoming.forEach((item) => {
+    const keys = recordKeys(item);
+    if (keys.some((key) => existing.has(key))) return;
+    merged.push(item);
+    keys.forEach((key) => existing.add(key));
+  });
+
+  return merged;
 }
 
 function withDemoProductDefaults(product: Product): Product {
@@ -435,8 +507,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return summary;
   };
 
-  const freshStartResetAndImport = async () => {
-    const result = await runFreshStartResetAndImport();
+  const freshStartReset = async () => {
+    setInventoryItems([]);
+    setProducts([]);
+    setProductBomLines([]);
+    setProductionJobs([]);
+    setStockTransactions([]);
+
+    const result = await runFreshStartReset();
     const resetLog: ActivityLog = {
       id: `act-${Math.random().toString(36).substring(2, 9)}`,
       actorName: "Admin",
@@ -445,25 +523,97 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       entityId: "fresh-start",
       createdAt: new Date().toISOString()
     };
-    const importLog: ActivityLog = {
-      id: `act-${Math.random().toString(36).substring(2, 9)}`,
-      actorName: "Admin",
-      action: "Fresh inventory master list imported",
-      entityType: "inventory_item",
-      entityId: "fresh-inventory-master-list",
-      createdAt: new Date().toISOString()
-    };
 
     setInventoryItems(result.items);
-    setProducts([]);
-    setProductBomLines([]);
-    setProductionJobs([]);
-    setStockTransactions([]);
-    setActivityLogs([importLog, resetLog]);
+    setActivityLogs([resetLog]);
     setInventoryError(null);
 
-    localStorage.setItem("prodstock_logs", JSON.stringify([importLog, resetLog]));
+    localStorage.setItem("prodstock_logs", JSON.stringify([resetLog]));
     return result;
+  };
+
+  const restoreFullBackup = async (backup: BackupRestorePayload, mode: RestoreMode): Promise<BackupRestoreSummary> => {
+    const data = backup.data ?? {};
+    const backupInventory = data.inventoryItems ?? [];
+    const backupProducts = data.products ?? [];
+    const backupBomLines = data.productBomLines ?? [];
+    const backupBoms = data.bomLibrary ?? [];
+    const backupAssignments = data.productBomAssignments ?? [];
+    const backupPacking = data.packingTemplates ?? [];
+    const backupProduction = data.productionPlans ?? [];
+    const backupQuickOrders = data.quickOrders ?? [];
+    const backupTransactions = data.stockTransactions ?? [];
+    const backupLogs = data.activityLogs ?? [];
+    const fullMode = mode === "full-after-fresh-start";
+
+    const inventorySummary = isSupabaseConfigured()
+      ? await restoreInventoryToSupabase(backupInventory, mode)
+      : { added: backupInventory.length, skipped: 0, updated: 0, items: backupInventory };
+    const bomPackingSummary = isSupabaseConfigured()
+      ? await restoreBomPackingToSupabase(backupBoms as ReturnType<typeof getMasterBoms>, backupPacking as ReturnType<typeof getPackingTemplates>, mode)
+      : {
+          bomsRestored: backupBoms.length,
+          bomLinesRestored: backupBoms.reduce<number>((sum, bom) => sum + (Array.isArray((bom as { lines?: unknown[] }).lines) ? (bom as { lines: unknown[] }).lines.length : 0), 0),
+          packingTemplatesRestored: backupPacking.length,
+          packingTemplateLinesRestored: backupPacking.reduce<number>((sum, template) => sum + (Array.isArray((template as { materials?: unknown[] }).materials) ? (template as { materials: unknown[] }).materials.length : 0), 0),
+          skippedDuplicates: 0,
+          errors: []
+        };
+
+    const nextProducts = fullMode ? backupProducts : mergeMissingRecords(products, backupProducts);
+    const nextBomLines = fullMode ? backupBomLines : mergeMissingRecords(productBomLines, backupBomLines);
+    const nextBoms = fullMode ? backupBoms : mergeMissingRecords(getMasterBoms(), backupBoms);
+    const nextAssignments = fullMode ? backupAssignments : mergeMissingRecords(getProductBomAssignments(), backupAssignments);
+    const nextPacking = fullMode ? backupPacking : mergeMissingRecords(getPackingTemplates(), backupPacking);
+    const nextProduction = fullMode ? backupProduction : mergeMissingRecords(productionJobs, backupProduction);
+    const nextQuickOrders = fullMode ? backupQuickOrders : mergeMissingRecords(getQuickOrders(), backupQuickOrders);
+    const nextTransactions = fullMode ? backupTransactions : mergeMissingRecords(stockTransactions, backupTransactions);
+    const nextLogsBase = fullMode ? backupLogs : mergeMissingRecords(activityLogs, backupLogs);
+    const restoreLog: ActivityLog = {
+      id: `act-${Math.random().toString(36).substring(2, 9)}`,
+      actorName: "Admin",
+      action: "Backup restored",
+      entityType: "system",
+      entityId: "backup-restore",
+      createdAt: new Date().toISOString()
+    };
+    const nextLogs = [restoreLog, ...nextLogsBase];
+
+    setInventoryItems(inventorySummary.items);
+    setProducts(nextProducts);
+    setProductBomLines(nextBomLines);
+    setProductionJobs(nextProduction);
+    setStockTransactions(nextTransactions);
+    setActivityLogs(nextLogs);
+
+    saveMasterBoms(nextBoms as ReturnType<typeof getMasterBoms>);
+    saveProductBomAssignments(nextAssignments as ReturnType<typeof getProductBomAssignments>);
+    savePackingTemplates(nextPacking as ReturnType<typeof getPackingTemplates>);
+    saveQuickOrders(nextQuickOrders as ReturnType<typeof getQuickOrders>);
+    localStorage.setItem("prodstock_products", JSON.stringify(nextProducts));
+    localStorage.setItem("prodstock_bom", JSON.stringify(nextBomLines));
+    localStorage.setItem("prodstock_jobs", JSON.stringify(nextProduction));
+    localStorage.setItem("prodstock_txns", JSON.stringify(nextTransactions));
+    localStorage.setItem("prodstock_logs", JSON.stringify(nextLogs));
+
+    return {
+      inventoryAdded: inventorySummary.added,
+      inventorySkipped: inventorySummary.skipped,
+      inventoryUpdated: inventorySummary.updated,
+      bomPackingSkipped: bomPackingSummary.skippedDuplicates,
+      errors: bomPackingSummary.errors,
+      restored: {
+        inventory: backupInventory.length,
+        boms: bomPackingSummary.bomsRestored,
+        bomLines: bomPackingSummary.bomLinesRestored,
+        packingTemplates: bomPackingSummary.packingTemplatesRestored,
+        packingLines: bomPackingSummary.packingTemplateLinesRestored,
+        production: backupProduction.length,
+        quickOrders: backupQuickOrders.length,
+        transactions: backupTransactions.length,
+        logs: backupLogs.length
+      }
+    };
   };
 
   // Product Logic
@@ -1095,7 +1245,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         refreshInventoryItems,
         importLocalInventoryBackup,
         exportInventoryBackup,
-        freshStartResetAndImport,
+        freshStartReset,
+        restoreFullBackup,
         addProduct,
         updateProduct,
         archiveProduct,

@@ -111,7 +111,7 @@ export default function DashboardPage() {
           <div className="mt-4 flex flex-wrap gap-4 text-body-sm text-on-surface-variant">
             <span>Raw PHP 0</span>
             <span>Packaging PHP 0</span>
-            <span>Labor PHP 0</span>
+            <span>Manpower PHP 0</span>
           </div>
         </div>
       </Card>

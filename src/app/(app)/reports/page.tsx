@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExpensesChart } from "@/components/reports/expenses-chart";
-import { useApp } from "@/context/app-context";
+import { useApp, type BackupRestorePayload, type BackupRestoreSummary, type RestoreMode } from "@/context/app-context";
 import { formatMoney } from "@/lib/utils";
 import {
   getMasterBoms,
@@ -18,13 +18,21 @@ import {
 } from "@/lib/operations-store";
 
 type BackupPreview = {
+  version: number;
+  exportedAt: string;
   inventory: number;
+  products: number;
   boms: number;
+  bomLines: number;
+  productBomAssignments: number;
   packingTemplates: number;
+  packingLines: number;
   production: number;
   quickOrders: number;
   transactions: number;
   logs: number;
+  result: "RESTORE_READY" | "RESTORE_RISK";
+  warnings: string[];
 };
 
 type FullBackup = {
@@ -55,7 +63,7 @@ type FullBackup = {
 };
 
 export default function ReportsPage() {
-  const { inventoryItems, productionJobs, stockTransactions, products, productBomLines, activityLogs, inventoryError, freshStartResetAndImport } = useApp();
+  const { inventoryItems, productionJobs, stockTransactions, products, productBomLines, activityLogs, inventoryError, freshStartReset, restoreFullBackup } = useApp();
   const [activeFilter, setActiveFilter] = useState<"week" | "month">("week");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [backupPreview, setBackupPreview] = useState<BackupPreview | null>(null);
@@ -63,13 +71,23 @@ export default function ReportsPage() {
   const [backupDownloaded, setBackupDownloaded] = useState(false);
   const [freshStartText, setFreshStartText] = useState("");
   const [freshStartBusy, setFreshStartBusy] = useState(false);
-  const [freshStartResult, setFreshStartResult] = useState<{ packagingCount: number; rawCount: number; added: number; skipped: number } | null>(null);
+  const [freshStartResult, setFreshStartResult] = useState<string | null>(null);
+  const [restoreMode, setRestoreMode] = useState<RestoreMode>("safe-merge");
+  const [restoreBusy, setRestoreBusy] = useState(false);
+  const [restoreSummary, setRestoreSummary] = useState<BackupRestoreSummary | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const lowStock = useMemo(() => 
     inventoryItems.filter((item) => !item.isArchived && (item.status === "critical" || item.status === "low")),
     [inventoryItems]
   );
+
+  const fullRestoreAllowed = useMemo(() => {
+    const activeInventory = inventoryItems.filter((item) => !item.isArchived).length;
+    return Boolean(freshStartResult)
+      || (activeInventory === 0 && products.length === 0 && productBomLines.length === 0 && productionJobs.length === 0 && stockTransactions.length === 0 && activityLogs.length <= 1);
+  }, [activityLogs.length, freshStartResult, inventoryItems, productBomLines.length, productionJobs.length, products.length, stockTransactions.length]);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -168,15 +186,38 @@ export default function ReportsPage() {
     triggerToast("CSV exported.");
   };
 
-  const previewBackup = (backup: FullBackup): BackupPreview => ({
-    inventory: backup.data.inventoryItems?.length ?? 0,
-    boms: backup.data.bomLibrary?.length ?? 0,
-    packingTemplates: backup.data.packingTemplates?.length ?? 0,
-    production: backup.data.productionPlans?.length ?? 0,
-    quickOrders: backup.data.quickOrders?.length ?? 0,
-    transactions: backup.data.stockTransactions?.length ?? 0,
-    logs: backup.data.activityLogs?.length ?? 0
-  });
+  const previewBackup = (backup: FullBackup): BackupPreview => {
+    const warnings: string[] = [];
+    const data = backup.data;
+    if (!Array.isArray(data.inventoryItems)) warnings.push("Inventory items are missing.");
+    if (!Array.isArray(data.bomLibrary)) warnings.push("BOM Library is missing.");
+    if (!Array.isArray(data.packingTemplates)) warnings.push("Packing Templates are missing.");
+    if (!Array.isArray(data.productionPlans)) warnings.push("Production Plans are missing.");
+    if (!Array.isArray(data.quickOrders)) warnings.push("Quick Orders are missing.");
+    if (!Array.isArray(data.stockTransactions)) warnings.push("Stock Transactions are missing.");
+    if (!Array.isArray(data.activityLogs)) warnings.push("Activity Logs are missing.");
+
+    const boms = data.bomLibrary ?? [];
+    const packing = data.packingTemplates ?? [];
+
+    return {
+      version: backup.version,
+      exportedAt: backup.exportedAt,
+      inventory: data.inventoryItems?.length ?? 0,
+      products: data.products?.length ?? 0,
+      boms: boms.length,
+      bomLines: boms.reduce<number>((sum, bom) => sum + (Array.isArray((bom as { lines?: unknown[] }).lines) ? (bom as { lines: unknown[] }).lines.length : 0), 0),
+      productBomAssignments: data.productBomAssignments?.length ?? 0,
+      packingTemplates: packing.length,
+      packingLines: packing.reduce<number>((sum, template) => sum + (Array.isArray((template as { materials?: unknown[] }).materials) ? (template as { materials: unknown[] }).materials.length : 0), 0),
+      production: data.productionPlans?.length ?? 0,
+      quickOrders: data.quickOrders?.length ?? 0,
+      transactions: data.stockTransactions?.length ?? 0,
+      logs: data.activityLogs?.length ?? 0,
+      result: warnings.length > 0 ? "RESTORE_RISK" : "RESTORE_READY",
+      warnings
+    };
+  };
 
   const handleImportFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -197,6 +238,8 @@ export default function ReportsPage() {
         }
         setPendingBackup(parsed);
         setBackupPreview(previewBackup(parsed));
+        setRestoreError(null);
+        setRestoreSummary(null);
       } catch {
         triggerToast("Backup file could not be read.");
       }
@@ -204,13 +247,30 @@ export default function ReportsPage() {
     reader.readAsText(file);
   };
 
-  const confirmImport = () => {
+  const confirmImport = async () => {
     if (!pendingBackup) return;
     if (inventoryError?.includes("PGRST205") || inventoryError?.includes("inventory_items")) {
       triggerToast("Supabase table missing. Apply migrations before importing.");
       return;
     }
-    triggerToast("Import restore waits for Supabase tables. No records changed.");
+    if (restoreMode === "full-after-fresh-start" && !fullRestoreAllowed) {
+      triggerToast("Full Restore is only available after Fresh Start Reset.");
+      return;
+    }
+
+    setRestoreBusy(true);
+    try {
+      const summary = await restoreFullBackup(pendingBackup as BackupRestorePayload, restoreMode);
+      setRestoreSummary(summary);
+      setRestoreError(null);
+      setFreshStartResult(null);
+      triggerToast(restoreMode === "full-after-fresh-start" ? "Full backup restored." : "Safe merge restore complete.");
+    } catch (error) {
+      setRestoreError(formatRestoreError(error));
+      triggerToast("Backup restore failed. See error details.");
+    } finally {
+      setRestoreBusy(false);
+    }
   };
 
   const runFreshStart = async () => {
@@ -225,10 +285,11 @@ export default function ReportsPage() {
 
     setFreshStartBusy(true);
     try {
-      const result = await freshStartResetAndImport();
-      setFreshStartResult(result);
+      await freshStartReset();
+      setFreshStartResult("Fresh Start complete. App data is empty and ready for backup restore.");
+      setRestoreMode("full-after-fresh-start");
       setFreshStartText("");
-      triggerToast(`Fresh Start complete. Imported ${result.added} inventory items.`);
+      triggerToast("Fresh Start complete. App is empty.");
     } catch (error) {
       triggerToast(error instanceof Error ? error.message : "Fresh Start failed.");
     } finally {
@@ -291,7 +352,7 @@ export default function ReportsPage() {
         <div className="grid gap-4">
           <MiniReport label="Raw" value={expenseSummary.raw} />
           <MiniReport label="Packaging" value={expenseSummary.packaging} />
-          <MiniReport label="Labor" value={expenseSummary.labor} />
+          <MiniReport label="Manpower" value={expenseSummary.labor} />
         </div>
       </section>
 
@@ -406,17 +467,68 @@ export default function ReportsPage() {
         <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImportFile} />
         {backupPreview && (
           <div className="mt-3 rounded-lg border border-outline-variant/25 bg-surface-container-low p-3">
-            <p className="text-[12px] font-bold uppercase text-outline">Import preview</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[12px] font-bold uppercase text-outline">Restore Test / Dry Run</p>
+              <Badge tone={backupPreview.result === "RESTORE_READY" ? "good" : "critical"}>{backupPreview.result}</Badge>
+            </div>
+            <p className="mt-1 text-[11.5px] text-on-surface-variant">
+              Version {backupPreview.version} • {new Date(backupPreview.exportedAt).toLocaleString()}
+            </p>
             <div className="mt-2 grid grid-cols-2 gap-1.5 text-[12px] text-on-surface-variant">
               <span>Inventory: {backupPreview.inventory}</span>
+              <span>Products: {backupPreview.products}</span>
               <span>BOMs: {backupPreview.boms}</span>
+              <span>BOM lines: {backupPreview.bomLines}</span>
+              <span>BOM links: {backupPreview.productBomAssignments}</span>
               <span>Packing: {backupPreview.packingTemplates}</span>
+              <span>Packing lines: {backupPreview.packingLines}</span>
               <span>Production: {backupPreview.production}</span>
               <span>Quick Orders: {backupPreview.quickOrders}</span>
               <span>Transactions: {backupPreview.transactions}</span>
               <span>Logs: {backupPreview.logs}</span>
             </div>
-            <Button size="sm" className="mt-3 h-9 w-full" onClick={confirmImport}>Confirm safe import</Button>
+            {backupPreview.warnings.length > 0 && (
+              <div className="mt-2 rounded-md border border-warning/25 bg-warning/10 px-2 py-1.5 text-[11.5px] text-warning">
+                {backupPreview.warnings.join(" ")}
+              </div>
+            )}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setRestoreMode("safe-merge")}
+                className={cnRestoreMode(restoreMode === "safe-merge")}
+              >
+                Safe Merge
+              </button>
+              <button
+                type="button"
+                onClick={() => setRestoreMode("full-after-fresh-start")}
+                disabled={!fullRestoreAllowed}
+                className={cnRestoreMode(restoreMode === "full-after-fresh-start")}
+              >
+                Full Restore
+              </button>
+            </div>
+            <p className="mt-2 text-[11.5px] leading-5 text-on-surface-variant">
+              {restoreMode === "safe-merge"
+                ? "Adds missing records only and skips duplicates."
+                : fullRestoreAllowed
+                  ? "For use after Fresh Start. Restores backup records into the empty app."
+                  : "Run Fresh Start Reset before using Full Restore."}
+            </p>
+            <Button size="sm" className="mt-3 h-9 w-full" onClick={confirmImport} disabled={restoreBusy || backupPreview.result !== "RESTORE_READY"}>
+              {restoreBusy ? "Restoring..." : "Confirm Restore"}
+            </Button>
+            {restoreSummary && (
+              <p className="mt-2 text-[11.5px] leading-5 text-success">
+                Restored inventory {restoreSummary.restored.inventory}, BOMs {restoreSummary.restored.boms}, BOM lines {restoreSummary.restored.bomLines}, packing {restoreSummary.restored.packingTemplates}, packing lines {restoreSummary.restored.packingLines}, production {restoreSummary.restored.production}, quick orders {restoreSummary.restored.quickOrders}, transactions {restoreSummary.restored.transactions}, logs {restoreSummary.restored.logs}. Skipped duplicates {restoreSummary.inventorySkipped + restoreSummary.bomPackingSkipped}.
+              </p>
+            )}
+            {restoreError && (
+              <p className="mt-2 rounded-md border border-error/25 bg-error/10 px-2 py-1.5 text-[11.5px] leading-5 text-error">
+                {restoreError}
+              </p>
+            )}
           </div>
         )}
         <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-3">
@@ -425,7 +537,7 @@ export default function ReportsPage() {
             <div>
               <p className="text-[12px] font-bold uppercase text-warning">Fresh Start Reset</p>
               <p className="mt-1 text-[12px] leading-5 text-on-surface-variant">
-                Manual setup only. Downloads are required first. This clears app business data and imports the real Raw and Packaging master list with zero quantity and blank costs.
+                Manual setup only. Downloads are required first. This clears app business data to an empty state. Restore your saved data using Import Backup.
               </p>
             </div>
           </div>
@@ -444,7 +556,7 @@ export default function ReportsPage() {
               disabled={!backupDownloaded || freshStartText !== "FRESH START" || freshStartBusy}
               onClick={runFreshStart}
             >
-              {freshStartBusy ? "Resetting..." : "Fresh Start + Import Master List"}
+              {freshStartBusy ? "Resetting..." : "Fresh Start Reset"}
             </Button>
           </div>
           <p className="mt-2 text-[11.5px] leading-5 text-on-surface-variant">
@@ -452,7 +564,7 @@ export default function ReportsPage() {
           </p>
           {freshStartResult && (
             <p className="mt-2 text-[11.5px] leading-5 text-success">
-              Imported {freshStartResult.packagingCount} packaging and {freshStartResult.rawCount} raw material master items. Added {freshStartResult.added}, skipped {freshStartResult.skipped}.
+              {freshStartResult}
             </p>
           )}
         </div>
@@ -488,4 +600,29 @@ function MiniReport({ label, value }: Readonly<{ label: string; value: number }>
       </div>
     </Card>
   );
+}
+
+function cnRestoreMode(active: boolean) {
+  return [
+    "h-9 rounded-md border px-2 text-[11.5px] font-semibold transition",
+    active
+      ? "border-primary bg-primary text-on-primary"
+      : "border-outline-variant/30 bg-surface-container text-on-surface-variant"
+  ].join(" ");
+}
+
+function formatRestoreError(error: unknown) {
+  const info = (error as { info?: { table?: string; operation?: string; code?: string; message?: string; details?: string; hint?: string } })?.info;
+  if (info) {
+    return [
+      info.table ? `Table: ${info.table}.` : null,
+      info.operation ? `Operation: ${info.operation}.` : null,
+      info.code ? `Code: ${info.code}.` : null,
+      `Message: ${info.message ?? "Restore failed."}`,
+      info.details ? `Details: ${info.details}.` : null,
+      info.hint ? `Hint: ${info.hint}.` : null
+    ].filter(Boolean).join(" ");
+  }
+
+  return error instanceof Error ? error.message : "Backup restore failed.";
 }

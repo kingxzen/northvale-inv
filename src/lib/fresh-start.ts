@@ -1,14 +1,11 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/browser";
-import { createInventoryItemInSupabase, isSupabaseConfigured, listInventoryItemsFromSupabase } from "@/lib/supabase/repositories/inventory";
-import type { InventoryItem, InventoryUnit } from "@/types/domain";
+import { isSupabaseConfigured, listInventoryItemsFromSupabase } from "@/lib/supabase/repositories/inventory";
+import type { InventoryItem } from "@/types/domain";
 
 export type FreshStartResult = {
-  packagingCount: number;
-  rawCount: number;
-  added: number;
-  skipped: number;
+  cleared: true;
   items: (InventoryItem & { isArchived?: boolean })[];
 };
 
@@ -27,129 +24,22 @@ const APP_LOCAL_STORAGE_KEYS = [
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
-const PACKAGING_ITEMS = [
-  "Jerry Can Bottle 4L Gal White",
-  "3.8L Gal White Round Bottle",
-  "8oz Gal Natural White Round Bottle",
-  "Tubular Bottle Clear 500ml with Flipcap Clear",
-  "Tubular Bottle Clear 150ml with Back Sprayer",
-  "Petone Bottle 65ml Natural White",
-  "DIY Plastic",
-  "Curl Quad AH Sticker",
-  "Stretch Film Black",
-  "Clear Tape",
-  "Fragile Tape",
-  "Bubble Wrap",
-  "Air Column",
-  "Black Pouch Medium",
-  "Black Pouch XXL",
-  "Box By 4",
-  "Single Box"
-];
-
-const RAW_ITEMS = [
-  "Potassium Hydroxide",
-  "Xanthan Gum",
-  "Bicarbonate",
-  "Calcium Hypochlorite",
-  "Colorant Orange Shade",
-  "Colorant Strawberry Red",
-  "Colorant Green Shade",
-  "Colorant Lemon Yellow",
-  "Colorant Violet Ube",
-  "Colorant Blue Shade",
-  "Fragrance Lemon",
-  "Fragrance Compating",
-  "Fragrance Lavender",
-  "Fragrance Baby Powder",
-  "Fragrance Chamomile",
-  "Fragrance Passion",
-  "Fragrance Bombshell",
-  "Surfactant SLES",
-  "Refined Salt",
-  "Solar Salt",
-  "CDEA",
-  "NP10",
-  "DPG",
-  "Glycerine",
-  "Betaine",
-  "Preservatives",
-  "Methanol",
-  "Ethyl Alcohol",
-  "Hydrogen Peroxide 50%",
-  "Falcon Beads",
-  "Kahl Wax",
-  "Caustic Pearl",
-  "AOS Powder",
-  "CMC A+ Tinson",
-  "CMC Chem",
-  "CMC Illyon",
-  "Sodium Gluconate",
-  "Soda Ash",
-  "Citric Acid",
-  "Titanium"
-];
-
-const LITER_RAW_NAMES = new Set([
-  "CDEA",
-  "NP10",
-  "DPG",
-  "Glycerine",
-  "Betaine",
-  "Preservatives",
-  "Methanol",
-  "Ethyl Alcohol",
-  "Hydrogen Peroxide 50%"
-]);
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 export function clearFreshStartLocalData() {
   APP_LOCAL_STORAGE_KEYS.forEach((key) => window.localStorage.removeItem(key));
 }
 
-export function getFreshStartMasterCounts() {
-  return { packagingCount: PACKAGING_ITEMS.length, rawCount: RAW_ITEMS.length };
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function rawUnit(name: string): InventoryUnit {
-  if (name.startsWith("Fragrance ") || name.startsWith("Colorant ") || LITER_RAW_NAMES.has(name)) return "liter";
-  return "kg";
-}
-
-function masterItem(name: string, category: InventoryItem["category"], index: number): InventoryItem & { isArchived?: boolean } {
-  const prefix = category === "packaging" ? "pkg" : "raw";
-  return {
-    id: `item-${prefix}-${slugify(name)}`,
-    sku: `${prefix.toUpperCase()}-${String(index + 1).padStart(3, "0")}-${slugify(name).slice(0, 24).toUpperCase()}`,
-    name,
-    category,
-    unit: category === "packaging" ? "pcs" : rawUnit(name),
-    quantityOnHand: 0,
-    reorderPoint: 0,
-    locationId: category === "packaging" ? "loc-a2" : "loc-a1",
-    unitCost: undefined,
-    status: "active",
-    isArchived: false
-  };
-}
-
-export function buildFreshStartInventoryMasterList() {
-  return [
-    ...PACKAGING_ITEMS.map((name, index) => masterItem(name, "packaging", index)),
-    ...RAW_ITEMS.map((name, index) => masterItem(name, "raw", index))
-  ];
-}
-
 async function deleteAllRows(table: string) {
   const supabase = createClient();
   const { error } = await supabase.from(table).delete().neq("id", NIL_UUID);
-  if (error) throw new Error(`${table}: ${error.message}${error.code ? ` (${error.code})` : ""}${error.hint ? ` Hint: ${error.hint}` : ""}`);
+  if (!error) return;
+
+  const missingTable = error.code === "PGRST205" || error.code === "42P01";
+  if (missingTable && table !== "inventory_items") return;
+
+  throw new Error(`${table}: ${error.message}${error.code ? ` (${error.code})` : ""}${error.hint ? ` Hint: ${error.hint}` : ""}`);
 }
 
 async function clearSupabaseBusinessTables() {
@@ -180,48 +70,41 @@ async function clearSupabaseBusinessTables() {
   }
 }
 
-async function importInventoryMasterList() {
-  const masterItems = buildFreshStartInventoryMasterList();
+async function archiveRemainingInventoryRows() {
   const current = await listInventoryItemsFromSupabase();
-  if (!current.configured) throw new Error("Supabase is not configured.");
+  if (!current.configured) return [];
 
-  const existingKeys = new Set(
-    current.items.flatMap((item) => [item.name.trim().toLowerCase(), item.sku.trim().toLowerCase()])
-  );
+  const supabase = createClient();
+  for (const item of current.items) {
+    let query = supabase
+      .from("inventory_items")
+      .update({
+        quantity_on_hand: 0,
+        unit_cost: null,
+        status: "active",
+        is_archived: true
+      })
+      .select("id");
 
-  let added = 0;
-  let skipped = 0;
+    query = isUuid(item.id) ? query.eq("id", item.id) : query.eq("legacy_id", item.id);
+    const { error } = await query;
 
-  for (const item of masterItems) {
-    const nameKey = item.name.trim().toLowerCase();
-    const skuKey = item.sku.trim().toLowerCase();
-    if (existingKeys.has(nameKey) || existingKeys.has(skuKey)) {
-      skipped += 1;
-      continue;
-    }
-
-    await createInventoryItemInSupabase(item);
-    existingKeys.add(nameKey);
-    existingKeys.add(skuKey);
-    added += 1;
+    if (error) throw new Error(`inventory_items: ${error.message}${error.code ? ` (${error.code})` : ""}${error.hint ? ` Hint: ${error.hint}` : ""}`);
   }
 
   const refreshed = await listInventoryItemsFromSupabase();
-  return { added, skipped, items: refreshed.items };
+  return refreshed.items;
 }
 
-export async function runFreshStartResetAndImport(): Promise<FreshStartResult> {
-  if (!isSupabaseConfigured()) throw new Error("Supabase is not configured.");
-
+export async function runFreshStartReset(): Promise<FreshStartResult> {
   clearFreshStartLocalData();
-  await clearSupabaseBusinessTables();
-  const imported = await importInventoryMasterList();
-  const counts = getFreshStartMasterCounts();
 
-  return {
-    ...counts,
-    added: imported.added,
-    skipped: imported.skipped,
-    items: imported.items
-  };
+  if (!isSupabaseConfigured()) {
+    return { cleared: true, items: [] };
+  }
+
+  await clearSupabaseBusinessTables();
+  const items = await archiveRemainingInventoryRows();
+
+  return { cleared: true, items };
 }

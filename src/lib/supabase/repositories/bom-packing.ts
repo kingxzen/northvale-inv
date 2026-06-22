@@ -17,6 +17,7 @@ type SupabaseProblemTable =
 export type SupabaseOperationalErrorInfo = {
   table: SupabaseProblemTable;
   message: string;
+  operation?: string;
   code?: string;
   details?: string;
   hint?: string;
@@ -92,10 +93,11 @@ const packingTemplateLineSelect = "id, legacy_id, packing_template_id, inventory
 
 export function formatSupabaseOperationalError(error: unknown) {
   if (error instanceof SupabaseOperationalError) {
-    const { table, message, code, details, hint } = error.info;
+    const { table, message, operation, code, details, hint } = error.info;
     return [
       `Supabase ${table} failed.`,
       `Table: ${table}.`,
+      operation ? `Operation: ${operation}.` : null,
       `Message: ${message}`,
       code ? `Code: ${code}` : null,
       details ? `Details: ${details}` : null,
@@ -105,16 +107,28 @@ export function formatSupabaseOperationalError(error: unknown) {
   return error instanceof Error ? error.message : "Supabase operation failed.";
 }
 
-function throwOperationalError(table: SupabaseProblemTable, error: unknown): never {
+function throwOperationalError(table: SupabaseProblemTable, error: unknown, operation?: string): never {
   const source = error as SupabaseErrorLike;
   throw new SupabaseOperationalError({
     table,
     message: source.message || "Check database table or policy.",
+    operation,
     code: source.code,
     details: source.details,
     hint: source.hint
   });
 }
+
+export type SupabaseRestoreMode = "safe-merge" | "full-after-fresh-start";
+
+export type BomPackingRestoreSummary = {
+  bomsRestored: number;
+  bomLinesRestored: number;
+  packingTemplatesRestored: number;
+  packingTemplateLinesRestored: number;
+  skippedDuplicates: number;
+  errors: string[];
+};
 
 async function loadInventoryRefs(supabase: ReturnType<typeof createClient>) {
   const { data, error } = await supabase.from("inventory_items").select("id, legacy_id");
@@ -334,4 +348,188 @@ export async function savePackingTemplateToSupabase(template: PackingTemplateRec
 
 export async function archivePackingTemplateInSupabase(template: PackingTemplateRecord) {
   return savePackingTemplateToSupabase({ ...template, status: "archived" });
+}
+
+const key = (value?: string | null) => value?.trim().toLowerCase() ?? "";
+
+function indexByKeys<T extends { id: string; legacy_id: string | null; name?: string }>(rows: T[]) {
+  const index = new Map<string, T>();
+  rows.forEach((row) => {
+    index.set(key(row.id), row);
+    if (row.legacy_id) index.set(key(row.legacy_id), row);
+    if (row.name) index.set(key(row.name), row);
+  });
+  return index;
+}
+
+function indexLinesByLegacy<T extends { id: string; legacy_id: string | null }>(rows: T[]) {
+  const index = new Map<string, T>();
+  rows.forEach((row) => {
+    index.set(key(row.id), row);
+    if (row.legacy_id) index.set(key(row.legacy_id), row);
+  });
+  return index;
+}
+
+export async function restoreBomPackingToSupabase(
+  boms: MasterBom[],
+  templates: PackingTemplateRecord[],
+  mode: SupabaseRestoreMode
+): Promise<BomPackingRestoreSummary> {
+  const supabase = createClient();
+  const refs = await loadInventoryRefs(supabase);
+  const summary: BomPackingRestoreSummary = {
+    bomsRestored: 0,
+    bomLinesRestored: 0,
+    packingTemplatesRestored: 0,
+    packingTemplateLinesRestored: 0,
+    skippedDuplicates: 0,
+    errors: []
+  };
+
+  const { data: existingBomRows, error: existingBomError } = await supabase
+    .from("master_boms")
+    .select(masterBomSelect);
+  if (existingBomError) throwOperationalError("master_boms", existingBomError, "restore select");
+
+  const { data: existingBomLineRows, error: existingBomLineError } = await supabase
+    .from("master_bom_lines")
+    .select(masterBomLineSelect);
+  if (existingBomLineError) throwOperationalError("master_bom_lines", existingBomLineError, "restore select");
+
+  const bomIndex = indexByKeys((existingBomRows ?? []) as MasterBomRow[]);
+  const bomLineIndex = indexLinesByLegacy((existingBomLineRows ?? []) as MasterBomLineRow[]);
+
+  for (const bom of boms) {
+    const existingBom = bomIndex.get(key(bom.id)) ?? bomIndex.get(key(bom.name));
+    const bomPayload = {
+      legacy_id: bom.id,
+      name: bom.name,
+      family: bom.family,
+      yield_qty: bom.yieldQty,
+      yield_unit: bom.yieldUnit,
+      status: bom.status
+    };
+
+    let savedBomId = existingBom?.id;
+    if (existingBom && mode === "safe-merge") {
+      summary.skippedDuplicates += 1;
+    } else {
+      const bomWrite = existingBom
+        ? supabase.from("master_boms").update(bomPayload).eq("id", existingBom.id).select(masterBomSelect).single()
+        : supabase.from("master_boms").insert(bomPayload).select(masterBomSelect).single();
+      const { data: savedBom, error: bomError } = await bomWrite;
+      if (bomError) throwOperationalError("master_boms", bomError, existingBom ? "restore update" : "restore insert");
+      savedBomId = (savedBom as MasterBomRow).id;
+      summary.bomsRestored += 1;
+      bomIndex.set(key(bom.id), savedBom as MasterBomRow);
+      bomIndex.set(key(bom.name), savedBom as MasterBomRow);
+    }
+
+    if (!savedBomId) continue;
+
+    for (const line of bom.lines) {
+      const existingLine = bomLineIndex.get(key(line.id));
+      if (existingLine && mode === "safe-merge") {
+        summary.skippedDuplicates += 1;
+        continue;
+      }
+
+      const linePayload = {
+        legacy_id: line.id,
+        master_bom_id: savedBomId,
+        line_type: line.lineType,
+        inventory_item_id: line.inventoryItemId ? refs.appIdToUuid.get(line.inventoryItemId) ?? null : null,
+        quantity_per_batch: line.quantityPerBatch,
+        unit: line.unit,
+        cost_override: line.costOverride ?? null,
+        notes: line.notes ?? null
+      };
+
+      const lineWrite = existingLine
+        ? supabase.from("master_bom_lines").update(linePayload).eq("id", existingLine.id).select(masterBomLineSelect).single()
+        : supabase.from("master_bom_lines").insert(linePayload).select(masterBomLineSelect).single();
+      const { data: savedLine, error: lineError } = await lineWrite;
+      if (lineError) throwOperationalError("master_bom_lines", lineError, existingLine ? "restore update" : "restore insert");
+      summary.bomLinesRestored += 1;
+      bomLineIndex.set(key(line.id), savedLine as MasterBomLineRow);
+    }
+  }
+
+  const { data: existingTemplateRows, error: existingTemplateError } = await supabase
+    .from("packing_templates")
+    .select(packingTemplateSelect);
+  if (existingTemplateError) throwOperationalError("packing_templates", existingTemplateError, "restore select");
+
+  const { data: existingTemplateLineRows, error: existingTemplateLineError } = await supabase
+    .from("packing_template_lines")
+    .select(packingTemplateLineSelect);
+  if (existingTemplateLineError) throwOperationalError("packing_template_lines", existingTemplateLineError, "restore select");
+
+  const templateIndex = indexByKeys((existingTemplateRows ?? []) as PackingTemplateRow[]);
+  const templateLineIndex = indexLinesByLegacy((existingTemplateLineRows ?? []) as PackingTemplateLineRow[]);
+
+  for (const template of templates) {
+    const existingTemplate = templateIndex.get(key(template.id)) ?? templateIndex.get(key(template.name));
+    const templatePayload = {
+      legacy_id: template.id,
+      name: template.name,
+      capacity: template.capacity,
+      basis: template.basis,
+      status: template.status
+    };
+
+    let savedTemplateId = existingTemplate?.id;
+    if (existingTemplate && mode === "safe-merge") {
+      summary.skippedDuplicates += 1;
+    } else {
+      const templateWrite = existingTemplate
+        ? supabase.from("packing_templates").update(templatePayload).eq("id", existingTemplate.id).select(packingTemplateSelect).single()
+        : supabase.from("packing_templates").insert(templatePayload).select(packingTemplateSelect).single();
+      const { data: savedTemplate, error: templateError } = await templateWrite;
+      if (templateError) throwOperationalError("packing_templates", templateError, existingTemplate ? "restore update" : "restore insert");
+      savedTemplateId = (savedTemplate as PackingTemplateRow).id;
+      summary.packingTemplatesRestored += 1;
+      templateIndex.set(key(template.id), savedTemplate as PackingTemplateRow);
+      templateIndex.set(key(template.name), savedTemplate as PackingTemplateRow);
+    }
+
+    if (!savedTemplateId) continue;
+
+    for (const line of template.materials) {
+      const inventoryUuid = refs.appIdToUuid.get(line.inventoryItemId);
+      if (!inventoryUuid) {
+        throw new SupabaseOperationalError({
+          table: "packing_template_lines",
+          operation: "restore validate inventory reference",
+          message: `Missing packaging inventory item for template line ${line.id}. Restore inventory before packing templates.`
+        });
+      }
+
+      const existingLine = templateLineIndex.get(key(line.id));
+      if (existingLine && mode === "safe-merge") {
+        summary.skippedDuplicates += 1;
+        continue;
+      }
+
+      const linePayload = {
+        legacy_id: line.id,
+        packing_template_id: savedTemplateId,
+        inventory_item_id: inventoryUuid,
+        qty: line.qty,
+        unit: line.unit,
+        usage_rule: line.usageRule
+      };
+
+      const lineWrite = existingLine
+        ? supabase.from("packing_template_lines").update(linePayload).eq("id", existingLine.id).select(packingTemplateLineSelect).single()
+        : supabase.from("packing_template_lines").insert(linePayload).select(packingTemplateLineSelect).single();
+      const { data: savedLine, error: lineError } = await lineWrite;
+      if (lineError) throwOperationalError("packing_template_lines", lineError, existingLine ? "restore update" : "restore insert");
+      summary.packingTemplateLinesRestored += 1;
+      templateLineIndex.set(key(line.id), savedLine as PackingTemplateLineRow);
+    }
+  }
+
+  return summary;
 }
