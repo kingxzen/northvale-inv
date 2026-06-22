@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useRef, useState, useMemo } from "react";
 import Link from "next/link";
-import { Download, Filter, PackageSearch, TrendingUp, History, Upload, FileDown, ShieldAlert } from "lucide-react";
+import { Database, Download, Filter, PackageSearch, TrendingUp, History, Upload, FileDown, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,12 @@ import {
   getProductBomAssignments,
   getQuickOrders
 } from "@/lib/operations-store";
+import { createClient } from "@/lib/supabase/browser";
+import { isSupabaseConfigured } from "@/lib/supabase/repositories/inventory";
+import {
+  listMasterBomsFromSupabase,
+  listPackingTemplatesFromSupabase
+} from "@/lib/supabase/repositories/bom-packing";
 
 type BackupPreview = {
   version: number;
@@ -62,6 +68,11 @@ type FullBackup = {
   };
 };
 
+type SyncCheckState = {
+  status: "idle" | "checking" | "connected" | "failed";
+  message: string;
+};
+
 export default function ReportsPage() {
   const { inventoryItems, productionJobs, stockTransactions, products, productBomLines, activityLogs, inventoryError, freshStartReset, restoreFullBackup } = useApp();
   const [activeFilter, setActiveFilter] = useState<"week" | "month">("week");
@@ -76,7 +87,16 @@ export default function ReportsPage() {
   const [restoreBusy, setRestoreBusy] = useState(false);
   const [restoreSummary, setRestoreSummary] = useState<BackupRestoreSummary | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [syncCheck, setSyncCheck] = useState<SyncCheckState>({
+    status: "idle",
+    message: "Not checked yet."
+  });
+  const [lastImportStatus, setLastImportStatus] = useState("No import this session.");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const supabaseConnected = isSupabaseConfigured();
+  const appEnvironment = typeof window !== "undefined" && window.location.hostname.includes("localhost") ? "Local" : "Production";
+  const projectRef = getSupabaseProjectRef();
+  const dataSource = supabaseConnected ? "Supabase" : "Local only";
 
   const lowStock = useMemo(() => 
     inventoryItems.filter((item) => !item.isArchived && (item.status === "critical" || item.status === "low")),
@@ -121,8 +141,11 @@ export default function ReportsPage() {
     return { ...totals, chartData };
   }, [activeFilter, inventoryItems, stockTransactions]);
 
-  const buildFullBackup = (): FullBackup => {
+  const buildFullBackup = async (): Promise<FullBackup> => {
     const quickOrders = getQuickOrders();
+    const bomLibrary = supabaseConnected ? await listMasterBomsFromSupabase() : getMasterBoms();
+    const packingTemplates = supabaseConnected ? await listPackingTemplatesFromSupabase() : getPackingTemplates();
+
     return {
       app: "NORTHVALE INV",
       type: "full-backup",
@@ -139,9 +162,9 @@ export default function ReportsPage() {
         inventoryItems,
         products,
         productBomLines,
-        bomLibrary: getMasterBoms(),
+        bomLibrary,
         productBomAssignments: getProductBomAssignments(),
-        packingTemplates: getPackingTemplates(),
+        packingTemplates,
         productionPlans: productionJobs,
         quickOrders,
         stockTransactions,
@@ -166,13 +189,18 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const downloadFullBackup = () => {
-    downloadTextFile(
-      `northvale-full-backup-${new Date().toISOString().slice(0, 10)}.json`,
-      JSON.stringify(buildFullBackup(), null, 2)
-    );
-    setBackupDownloaded(true);
-    triggerToast("Full backup downloaded.");
+  const downloadFullBackup = async () => {
+    try {
+      const backup = await buildFullBackup();
+      downloadTextFile(
+        `northvale-full-backup-${new Date().toISOString().slice(0, 10)}.json`,
+        JSON.stringify(backup, null, 2)
+      );
+      setBackupDownloaded(true);
+      triggerToast("Full backup downloaded.");
+    } catch (error) {
+      triggerToast(error instanceof Error ? error.message : "Full backup failed.");
+    }
   };
 
   const csvEscape = (value: unknown) => {
@@ -240,7 +268,9 @@ export default function ReportsPage() {
         setBackupPreview(previewBackup(parsed));
         setRestoreError(null);
         setRestoreSummary(null);
+        setLastImportStatus("Backup preview loaded. Restore not confirmed yet.");
       } catch {
+        setLastImportStatus("Import failed.");
         triggerToast("Backup file could not be read.");
       }
     };
@@ -264,9 +294,12 @@ export default function ReportsPage() {
       setRestoreSummary(summary);
       setRestoreError(null);
       setFreshStartResult(null);
-      triggerToast(restoreMode === "full-after-fresh-start" ? "Full backup restored." : "Safe merge restore complete.");
+      const savedTarget = supabaseConnected ? "Import saved to Supabase" : "Import saved locally only";
+      setLastImportStatus(savedTarget);
+      triggerToast(savedTarget);
     } catch (error) {
       setRestoreError(formatRestoreError(error));
+      setLastImportStatus("Import failed.");
       triggerToast("Backup restore failed. See error details.");
     } finally {
       setRestoreBusy(false);
@@ -297,6 +330,46 @@ export default function ReportsPage() {
     }
   };
 
+  const runSyncCheck = async () => {
+    if (!supabaseConnected) {
+      setSyncCheck({
+        status: "failed",
+        message: "Supabase env vars are missing. Data is local only and will not sync across devices."
+      });
+      return;
+    }
+
+    setSyncCheck({ status: "checking", message: "Checking shared Supabase tables..." });
+    try {
+      const supabase = createClient();
+      const results = await Promise.all([
+        readTableCount(supabase, "inventory_items"),
+        readTableCount(supabase, "master_boms"),
+        readTableCount(supabase, "master_bom_lines"),
+        readTableCount(supabase, "packing_templates"),
+        readTableCount(supabase, "packing_template_lines")
+      ]);
+      const failed = results.find((result) => result.error);
+      if (failed) {
+        setSyncCheck({
+          status: "failed",
+          message: `${failed.table}: ${failed.error}`
+        });
+        return;
+      }
+
+      setSyncCheck({
+        status: "connected",
+        message: results.map((result) => `${result.table} ${result.count ?? 0}`).join(" • ")
+      });
+    } catch (error) {
+      setSyncCheck({
+        status: "failed",
+        message: error instanceof Error ? error.message : "Supabase sync check failed."
+      });
+    }
+  };
+
   return (
     <AppShell>
       {/* Toast Banner */}
@@ -319,6 +392,48 @@ export default function ReportsPage() {
           </Link>
         </Button>
       </div>
+
+      <Card className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Database className="h-4 w-4 text-primary" />
+              <h3 className="text-[13px] font-bold uppercase text-on-surface">Data Sync</h3>
+            </div>
+            <p className="mt-1 text-[12px] leading-5 text-on-surface-variant">
+              Shared modules use Supabase when connected. Local-only data will not appear on other devices.
+            </p>
+          </div>
+          <Badge tone={supabaseConnected ? "good" : "critical"}>{supabaseConnected ? "Connected" : "Local"}</Badge>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] text-on-surface-variant">
+          <SyncField label="Data source" value={dataSource} />
+          <SyncField label="Environment" value={appEnvironment} />
+          <SyncField label="Supabase" value={supabaseConnected ? "Connected" : "Not connected"} />
+          <SyncField label="Project" value={projectRef} />
+        </div>
+        <div className="mt-3 rounded-md border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-[11.5px] leading-5 text-on-surface-variant">
+          Last sync/import status: {lastImportStatus}
+        </div>
+        {lastImportStatus === "Import saved locally only" && (
+          <div className="mt-2 rounded-md border border-warning/25 bg-warning/10 px-3 py-2 text-[11.5px] leading-5 text-warning">
+            This data will not appear on other devices.
+          </div>
+        )}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="mt-3 h-9 w-full border border-outline-variant/25"
+          onClick={runSyncCheck}
+          disabled={syncCheck.status === "checking"}
+        >
+          {syncCheck.status === "checking" ? "Checking..." : "Check Supabase Sync"}
+        </Button>
+        <p className={syncCheck.status === "failed" ? "mt-2 text-[11.5px] leading-5 text-error" : "mt-2 text-[11.5px] leading-5 text-on-surface-variant"}>
+          {syncCheck.message}
+        </p>
+      </Card>
 
       <div className="mt-5 flex gap-2">
         <Button 
@@ -602,6 +717,15 @@ function MiniReport({ label, value }: Readonly<{ label: string; value: number }>
   );
 }
 
+function SyncField({ label, value }: Readonly<{ label: string; value: string }>) {
+  return (
+    <div className="rounded-md border border-outline-variant/20 bg-surface-container-low px-2.5 py-2">
+      <p className="text-[10.5px] uppercase text-outline">{label}</p>
+      <p className="mt-0.5 truncate text-[12.5px] font-semibold text-on-surface">{value}</p>
+    </div>
+  );
+}
+
 function cnRestoreMode(active: boolean) {
   return [
     "h-9 rounded-md border px-2 text-[11.5px] font-semibold transition",
@@ -609,6 +733,40 @@ function cnRestoreMode(active: boolean) {
       ? "border-primary bg-primary text-on-primary"
       : "border-outline-variant/30 bg-surface-container text-on-surface-variant"
   ].join(" ");
+}
+
+function getSupabaseProjectRef() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return "Not configured";
+
+  try {
+    const host = new URL(url).hostname;
+    const ref = host.split(".")[0] ?? "";
+    if (ref.length <= 10) return ref || "Unknown";
+    return `${ref.slice(0, 6)}...${ref.slice(-4)}`;
+  } catch {
+    return "Invalid URL";
+  }
+}
+
+async function readTableCount(supabase: ReturnType<typeof createClient>, table: string) {
+  const { count, error } = await supabase
+    .from(table)
+    .select("id", { count: "exact", head: true });
+
+  if (error) {
+    return {
+      table,
+      error: [
+        error.code ? `Code ${error.code}` : null,
+        error.message,
+        error.details ? `Details ${error.details}` : null,
+        error.hint ? `Hint ${error.hint}` : null
+      ].filter(Boolean).join(". ")
+    };
+  }
+
+  return { table, count: count ?? 0 };
 }
 
 function formatRestoreError(error: unknown) {
