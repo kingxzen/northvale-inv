@@ -3,11 +3,16 @@
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { reportSeries } from "@/data/mock-data";
 
-export function ExpensesChart() {
+type ChartPoint = {
+  day: string;
+  cost: number;
+};
+
+export function ExpensesChart({ data = reportSeries }: Readonly<{ data?: ChartPoint[] }>) {
   return (
     <div className="h-40 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={reportSeries} margin={{ left: 0, right: 0, top: 12, bottom: 0 }}>
+        <AreaChart data={data} margin={{ left: 0, right: 0, top: 12, bottom: 0 }}>
           <defs>
             <linearGradient id="cost" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#adc6ff" stopOpacity={0.75} />

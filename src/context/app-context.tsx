@@ -28,6 +28,7 @@ import {
   updateInventoryItemInSupabase,
   type InventoryImportSummary
 } from "@/lib/supabase/repositories/inventory";
+import { runFreshStartResetAndImport, type FreshStartResult } from "@/lib/fresh-start";
 
 interface AppContextType {
   inventoryItems: (InventoryItem & { isArchived?: boolean })[];
@@ -50,6 +51,7 @@ interface AppContextType {
   refreshInventoryItems: () => Promise<void>;
   importLocalInventoryBackup: () => Promise<InventoryImportSummary>;
   exportInventoryBackup: () => string;
+  freshStartResetAndImport: () => Promise<FreshStartResult>;
   
   // Product actions
   addProduct: (product: Omit<Product, "id">, bomLines: Omit<ProductBomLine, "id" | "productId">[]) => Product;
@@ -431,6 +433,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       entityId: "inventory-import"
     });
     return summary;
+  };
+
+  const freshStartResetAndImport = async () => {
+    const result = await runFreshStartResetAndImport();
+    const resetLog: ActivityLog = {
+      id: `act-${Math.random().toString(36).substring(2, 9)}`,
+      actorName: "Admin",
+      action: "Fresh start reset completed",
+      entityType: "system",
+      entityId: "fresh-start",
+      createdAt: new Date().toISOString()
+    };
+    const importLog: ActivityLog = {
+      id: `act-${Math.random().toString(36).substring(2, 9)}`,
+      actorName: "Admin",
+      action: "Fresh inventory master list imported",
+      entityType: "inventory_item",
+      entityId: "fresh-inventory-master-list",
+      createdAt: new Date().toISOString()
+    };
+
+    setInventoryItems(result.items);
+    setProducts([]);
+    setProductBomLines([]);
+    setProductionJobs([]);
+    setStockTransactions([]);
+    setActivityLogs([importLog, resetLog]);
+    setInventoryError(null);
+
+    localStorage.setItem("prodstock_logs", JSON.stringify([importLog, resetLog]));
+    return result;
   };
 
   // Product Logic
@@ -1062,6 +1095,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         refreshInventoryItems,
         importLocalInventoryBackup,
         exportInventoryBackup,
+        freshStartResetAndImport,
         addProduct,
         updateProduct,
         archiveProduct,

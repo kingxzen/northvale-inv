@@ -1,6 +1,6 @@
 "use client";
 
-import { Boxes, CircleSlash, FlaskConical, PackageSearch } from "lucide-react";
+import { Boxes, CircleSlash, Clock3, FlaskConical, PackageSearch } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,38 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 export default function DashboardPage() {
-  const { inventoryItems, locations, productionJobs } = useApp();
+  const { inventoryItems, locations, productionJobs, stockTransactions, activityLogs } = useApp();
 
   const activeItems = useMemo(() => inventoryItems.filter(item => !item.isArchived), [inventoryItems]);
   const criticalItems = useMemo(() => activeItems.filter((item) => item.status === "critical"), [activeItems]);
   const lowItems = useMemo(() => activeItems.filter((item) => item.status === "low"), [activeItems]);
   const blockedJobs = useMemo(() => productionJobs.filter((job) => job.status === "blocked"), [productionJobs]);
+  const latestLog = useMemo(() => (
+    [...activityLogs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+  ), [activityLogs]);
+  const weeklyEstimate = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6, 23, 59, 59, 999);
+
+    return stockTransactions.reduce((sum, txn) => {
+      const created = new Date(txn.createdAt);
+      if (created < start || created > end) return sum;
+      const item = inventoryItems.find((entry) => entry.id === txn.inventoryItemId);
+      return sum + Number(txn.quantity || 0) * (item?.unitCost ?? 0);
+    }, 0);
+  }, [inventoryItems, stockTransactions]);
 
   return (
     <AppShell>
+      <section className="mb-3 flex items-center gap-2 rounded-lg border border-outline-variant/20 bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant">
+        <Clock3 className="h-4 w-4 shrink-0 text-primary" />
+        <p className="min-w-0 truncate">
+          Last update: {latestLog ? `${latestLog.action} • ${latestLog.actorName} • ${formatRelativeTime(latestLog.createdAt)}` : "No setup actions yet"}
+        </p>
+      </section>
+
       <section className="rounded-lg border border-primary/20 bg-hero-card p-6 shadow-card">
         <div className="grid grid-cols-[1fr_auto] gap-5">
           <div>
@@ -80,20 +103,30 @@ export default function DashboardPage() {
           </div>
           <div>
             <p className="text-body-md text-on-surface-variant">Weekly estimate</p>
-            <p className="text-headline-md font-bold text-white">{formatMoney(18450)}</p>
+            <p className="text-headline-md font-bold text-white">{formatMoney(weeklyEstimate)}</p>
           </div>
         </div>
         <div className="mt-5 border-t border-outline-variant/50 pt-5">
-          <Progress value={68} />
+          <Progress value={weeklyEstimate > 0 ? 68 : 0} />
           <div className="mt-4 flex flex-wrap gap-4 text-body-sm text-on-surface-variant">
-            <span>Raw PHP 10.8k</span>
-            <span>Packaging PHP 4.2k</span>
-            <span>Labor PHP 3.45k</span>
+            <span>Raw PHP 0</span>
+            <span>Packaging PHP 0</span>
+            <span>Labor PHP 0</span>
           </div>
         </div>
       </Card>
     </AppShell>
   );
+}
+
+function formatRelativeTime(value: string) {
+  const diffMs = Date.now() - new Date(value).getTime();
+  const diffMinutes = Math.max(0, Math.round(diffMs / 60000));
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return "Yesterday";
 }
 
 function Metric({ label, value, alert = false }: Readonly<{ label: string; value: number; alert?: boolean }>) {

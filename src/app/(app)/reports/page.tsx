@@ -55,11 +55,15 @@ type FullBackup = {
 };
 
 export default function ReportsPage() {
-  const { inventoryItems, productionJobs, stockTransactions, products, productBomLines, activityLogs, inventoryError } = useApp();
+  const { inventoryItems, productionJobs, stockTransactions, products, productBomLines, activityLogs, inventoryError, freshStartResetAndImport } = useApp();
   const [activeFilter, setActiveFilter] = useState<"week" | "month">("week");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [backupPreview, setBackupPreview] = useState<BackupPreview | null>(null);
   const [pendingBackup, setPendingBackup] = useState<FullBackup | null>(null);
+  const [backupDownloaded, setBackupDownloaded] = useState(false);
+  const [freshStartText, setFreshStartText] = useState("");
+  const [freshStartBusy, setFreshStartBusy] = useState(false);
+  const [freshStartResult, setFreshStartResult] = useState<{ packagingCount: number; rawCount: number; added: number; skipped: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const lowStock = useMemo(() => 
@@ -71,6 +75,33 @@ export default function ReportsPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2000);
   };
+
+  const expenseSummary = useMemo(() => {
+    const now = new Date();
+    const start = activeFilter === "week"
+      ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7))
+      : new Date(now.getFullYear(), now.getMonth(), 1);
+    start.setHours(0, 0, 0, 0);
+    const end = activeFilter === "week"
+      ? new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6, 23, 59, 59, 999)
+      : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const chartData = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => ({ day, cost: 0 }));
+    const totals = stockTransactions.reduce((acc, txn) => {
+      const created = new Date(txn.createdAt);
+      if (created < start || created > end) return acc;
+      const item = inventoryItems.find((entry) => entry.id === txn.inventoryItemId);
+      const value = Number(txn.quantity || 0) * (item?.unitCost ?? 0);
+      if (item?.category === "raw") acc.raw += value;
+      if (item?.category === "packaging") acc.packaging += value;
+      acc.total += value;
+      const dayIndex = Math.max(0, Math.min(6, (created.getDay() + 6) % 7));
+      chartData[dayIndex].cost += value;
+      return acc;
+    }, { raw: 0, packaging: 0, labor: 0, total: 0 });
+
+    return { ...totals, chartData };
+  }, [activeFilter, inventoryItems, stockTransactions]);
 
   const buildFullBackup = (): FullBackup => {
     const quickOrders = getQuickOrders();
@@ -122,6 +153,7 @@ export default function ReportsPage() {
       `northvale-full-backup-${new Date().toISOString().slice(0, 10)}.json`,
       JSON.stringify(buildFullBackup(), null, 2)
     );
+    setBackupDownloaded(true);
     triggerToast("Full backup downloaded.");
   };
 
@@ -181,6 +213,29 @@ export default function ReportsPage() {
     triggerToast("Import restore waits for Supabase tables. No records changed.");
   };
 
+  const runFreshStart = async () => {
+    if (!backupDownloaded) {
+      triggerToast("Download Full Backup before Fresh Start.");
+      return;
+    }
+    if (freshStartText !== "FRESH START") {
+      triggerToast("Type FRESH START to confirm.");
+      return;
+    }
+
+    setFreshStartBusy(true);
+    try {
+      const result = await freshStartResetAndImport();
+      setFreshStartResult(result);
+      setFreshStartText("");
+      triggerToast(`Fresh Start complete. Imported ${result.added} inventory items.`);
+    } catch (error) {
+      triggerToast(error instanceof Error ? error.message : "Fresh Start failed.");
+    } finally {
+      setFreshStartBusy(false);
+    }
+  };
+
   return (
     <AppShell>
       {/* Toast Banner */}
@@ -228,15 +283,15 @@ export default function ReportsPage() {
             <TrendingUp className="h-5 w-5 text-primary" />
           </div>
           <p className="mt-8 text-headline-md font-bold text-white">
-            {activeFilter === "week" ? formatMoney(18450) : formatMoney(78900)}
+            {formatMoney(expenseSummary.total)}
           </p>
-          <Badge tone="good" className="mt-2">+12.4%</Badge>
-          <ExpensesChart />
+          <Badge tone={expenseSummary.total > 0 ? "good" : "neutral"} className="mt-2">{expenseSummary.total > 0 ? "Live" : "No expenses"}</Badge>
+          <ExpensesChart data={expenseSummary.chartData} />
         </Card>
         <div className="grid gap-4">
-          <MiniReport label="Raw" value={activeFilter === "week" ? 10800 : 45600} />
-          <MiniReport label="Packaging" value={activeFilter === "week" ? 4200 : 19400} />
-          <MiniReport label="Labor" value={activeFilter === "week" ? 3450 : 13900} />
+          <MiniReport label="Raw" value={expenseSummary.raw} />
+          <MiniReport label="Packaging" value={expenseSummary.packaging} />
+          <MiniReport label="Labor" value={expenseSummary.labor} />
         </div>
       </section>
 
@@ -364,6 +419,43 @@ export default function ReportsPage() {
             <Button size="sm" className="mt-3 h-9 w-full" onClick={confirmImport}>Confirm safe import</Button>
           </div>
         )}
+        <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-3">
+          <div className="flex items-start gap-2">
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <div>
+              <p className="text-[12px] font-bold uppercase text-warning">Fresh Start Reset</p>
+              <p className="mt-1 text-[12px] leading-5 text-on-surface-variant">
+                Manual setup only. Downloads are required first. This clears app business data and imports the real Raw and Packaging master list with zero quantity and blank costs.
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 grid gap-2">
+            <input
+              value={freshStartText}
+              onChange={(event) => setFreshStartText(event.target.value)}
+              placeholder="Type FRESH START"
+              className="h-9 rounded-md border border-outline bg-surface-container px-3 text-[12.5px] text-white outline-none placeholder:text-on-surface-variant"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-9 border border-warning/30 text-warning"
+              disabled={!backupDownloaded || freshStartText !== "FRESH START" || freshStartBusy}
+              onClick={runFreshStart}
+            >
+              {freshStartBusy ? "Resetting..." : "Fresh Start + Import Master List"}
+            </Button>
+          </div>
+          <p className="mt-2 text-[11.5px] leading-5 text-on-surface-variant">
+            Backup gate: {backupDownloaded ? "Full Backup downloaded in this session." : "Download Full Backup first."}
+          </p>
+          {freshStartResult && (
+            <p className="mt-2 text-[11.5px] leading-5 text-success">
+              Imported {freshStartResult.packagingCount} packaging and {freshStartResult.rawCount} raw material master items. Added {freshStartResult.added}, skipped {freshStartResult.skipped}.
+            </p>
+          )}
+        </div>
         <div className="mt-3 rounded-md bg-surface-container-low px-3 py-2 text-[11.5px] leading-5 text-on-surface-variant">
           Do not run reset, seed, drop, truncate, delete all, or localStorage.clear.
         </div>
