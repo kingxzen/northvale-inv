@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Production Plan Detail - ProdStock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #111316;
+            color: #e2e2e6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-panel {
+            background: rgba(30, 33, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 49, 57, 0.5);
+        }
+        .status-pill-glow {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+        }
+        .cobalt-glow {
+            box-shadow: 0 0 20px rgba(2, 103, 184, 0.3);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"tertiary-fixed-dim": "#b6c6ef", "on-background": "#e2e2e6", "secondary-container": "#0267b8", "surface-variant": "#333538", "on-primary-fixed-variant": "#004395", "surface-container-low": "#1a1c1f", "outline-variant": "#424754", "on-primary": "#002e6a", "on-tertiary-fixed-variant": "#364768", "inverse-primary": "#005ac2", "tertiary-fixed": "#d8e2ff", "surface-container": "#1e2023", "on-secondary": "#00315d", "surface-dim": "#111316", "on-secondary-container": "#d6e5ff", "secondary-fixed-dim": "#a4c9ff", "on-surface-variant": "#c2c6d6", "primary-fixed": "#d8e2ff", "surface-container-lowest": "#0c0e11", "surface-container-high": "#282a2d", surface: "#111316", "on-surface": "#e2e2e6", "on-error-container": "#ffdad6", "secondary-fixed": "#d4e3ff", "on-secondary-fixed-variant": "#004883", "on-primary-fixed": "#001a42", "on-primary-container": "#00285d", secondary: "#a4c9ff", "error-container": "#93000a", "on-tertiary-container": "#182949", error: "#ffb4ab", "on-error": "#690005", "surface-bright": "#37393d", tertiary: "#b6c6ef", "on-secondary-fixed": "#001c39", "inverse-on-surface": "#2f3034", "primary-container": "#4d8eff", "inverse-surface": "#e2e2e6", "surface-container-highest": "#333538", background: "#111316", "primary-fixed-dim": "#adc6ff", "on-tertiary": "#1f3050", "surface-tint": "#adc6ff", primary: "#adc6ff", "on-tertiary-fixed": "#081b3a", outline: "#8c909f", "tertiary-container": "#8091b6"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {lg: "24px", base: "4px", xs: "4px", "container-margin": "24px", gutter: "16px", sm: "8px", md: "16px", xl: "40px"}, fontFamily: {"headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {"headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-xl": ["40px", {lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", fontWeight: "400"}], "label-sm": ["12px", {lineHeight: "14px", letterSpacing: "0.01em", fontWeight: "500"}], "label-md": ["14px", {lineHeight: "16px", fontWeight: "600"}]}}}};</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-lg py-sm">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-variant/50 rounded-full transition-colors active:scale-95">arrow_back</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Production plan</h1>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary p-2 hover:bg-surface-variant/50 rounded-full transition-colors">search</span>
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a manufacturing floor manager in their late 40s, wearing a subtle company uniform, set against a blurred industrial background with high-end precision machinery. The lighting is crisp and modern, matching a dark-mode UI aesthetic with cool blue and charcoal tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ6dBlhlH1xX_CSknCXnDw4J9D7I8CHB5a9ELdgqBoGVEJN-VWwYiRaqD6GDN-RdsCwfxGrTAgQNfbNBHVWKOkErab4RzxyOHBdgye62JaIrqOY1iMbUv0GhapFs0F36litMorwbZdFU9dRaH9aC_kC73VQhsHCJtiH2zT6o1SuJmeYuRAJVutWdJV3WNKpwiw4qFn80oFGepV5lMVOdMsCMDxi8aonsDYUT61X4ksfp_PIIC_j9j9i353HXoRbYSCNZ8uqK1cwN6Y"/>
+</div>
+</div>
+</header>
+<main class="mt-24 px-md md:px-xl max-w-6xl mx-auto space-y-lg">
+<!-- Header Section: Product & Critical Status -->
+<div class="bg-[#1A2B4B]/30 border border-secondary-container/20 rounded-xl p-lg cobalt-glow relative overflow-hidden">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md relative z-10">
+<div class="space-y-sm">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">precision_manufacturing</span>
+<span class="text-label-md text-secondary tracking-widest uppercase">Plan ID: #PP-2024-089</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-background">Keeva Airzen Lavender</h2>
+<p class="text-on-surface-variant font-body-md">Production Batch Size: <span class="text-on-surface font-semibold">100 gal</span></p>
+</div>
+<div class="flex flex-col items-end gap-xs">
+<div class="px-md py-sm bg-error/15 border border-error/30 rounded-full flex items-center gap-sm status-pill-glow">
+<span class="material-symbols-outlined text-error text-md">error</span>
+<span class="text-error font-label-md font-bold uppercase tracking-tight">Cannot produce</span>
+</div>
+<p class="text-label-sm text-on-error-container/70 pr-2 italic">Missing BOM components</p>
+</div>
+</div>
+<!-- Background Decoration -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-secondary-container/10 blur-[100px] -z-0"></div>
+</div>
+<!-- Job Summary Details Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="bg-surface-container border border-outline-variant/20 p-md rounded-xl space-y-base">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider">Start Date</p>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-sm">calendar_today</span>
+<p class="font-body-md text-on-surface">Oct 24, 2023</p>
+</div>
+</div>
+<div class="bg-surface-container border border-outline-variant/20 p-md rounded-xl space-y-base">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider">Operator</p>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-sm">person</span>
+<p class="font-body-md text-on-surface">M. Rodriguez</p>
+</div>
+</div>
+<div class="bg-surface-container border border-outline-variant/20 p-md rounded-xl space-y-base">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider">Line No.</p>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-sm">factory</span>
+<p class="font-body-md text-on-surface">Mixing Line A4</p>
+</div>
+</div>
+</div>
+<!-- BOM Availability Section -->
+<section class="space-y-md">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md text-on-background flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">list_alt</span>
+                    BOM Availability
+                </h3>
+<span class="text-label-md text-on-surface-variant">4 Components required</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+<!-- SLES (Missing) -->
+<div class="glass-panel p-md rounded-xl border-error/30 ring-1 ring-error/10">
+<div class="flex justify-between items-start mb-sm">
+<p class="font-label-md text-on-surface">SLES</p>
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between text-label-sm">
+<span class="text-on-surface-variant">Req.</span>
+<span class="text-on-surface font-semibold">45.0 kg</span>
+</div>
+<div class="flex justify-between text-label-sm">
+<span class="text-on-surface-variant">Avail.</span>
+<span class="text-error font-bold">12.5 kg</span>
+</div>
+<div class="w-full bg-surface-variant h-1.5 rounded-full mt-sm overflow-hidden">
+<div class="bg-error h-full" style="width: 28%"></div>
+</div>
+</div>
+</div>
+<!-- 500ml Bottle (Available) -->
+<div class="glass-panel p-md rounded-xl">
+<div class="flex justify-between items-start mb-sm">
+<p class="font-label-md text-on-surface">500ml Bottle</p>
+<span class="material-symbols-outlined text-emerald-500">check_circle</span>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between text-label-sm">
+<span class="text-on-surface-variant">Req.</span>
+<span class="text-on-surface font-semibold">800 units</span>
+</div>
+<div class="flex justify-between text-label-sm">
+<span class="text-on-surface-variant">Avail.</span>
+<span class="text-on-surface font-semibold">2,450 units</span>
+</div>
+<div class="w-full bg-surface-variant h-1.5 rounded-full mt-sm overflow-hidden">
+<div class="bg-secondary-container h-full" style="width: 100%"></div>
+</div>
+</div>
+</div>
+<!-- Alcohol (Available) -->
+<div class="glass-panel p-md rounded-xl">
+<div class="flex justify-between items-start mb-sm">
+<p class="font-label-md text-on-surface">Alcohol</p>
+<span class="material-symbols-outlined text-emerald-500">check_circle</span>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between text-label-sm">
+<span class="text-on-surface-variant">Req.</span>
+<span class="text-on-surface font-semibold">20.0 L</span>
+</div>
+<div class="flex justify-between text-label-sm">
+<span class="text-on-surface-variant">Avail.</span>
+<span class="text-on-surface font-semibold">55.0 L</span>
+</div>
+<div class="w-full bg-surface-variant h-1.5 rounded-full mt-sm overflow-hidden">
+<div class="bg-secondary-container h-full" style="width: 100%"></div>
+</div>
+</div>
+</div>
+<!-- Preservative (Available) -->
+<div class="glass-panel p-md rounded-xl">
+<div class="flex justify-between items-start mb-sm">
+<p class="font-label-md text-on-surface">Preservative</p>
+<span class="material-symbols-outlined text-emerald-500">check_circle</span>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between text-label-sm">
+<span class="text-on-surface-variant">Req.</span>
+<span class="text-on-surface font-semibold">2.5 kg</span>
+</div>
+<div class="flex justify-between text-label-sm">
+<span class="text-on-surface-variant">Avail.</span>
+<span class="text-on-surface font-semibold">12.0 kg</span>
+</div>
+<div class="w-full bg-surface-variant h-1.5 rounded-full mt-sm overflow-hidden">
+<div class="bg-secondary-container h-full" style="width: 100%"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Financial & Actions Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg items-end">
+<!-- Cost Breakdown -->
+<div class="bg-surface-container-high p-lg rounded-2xl border border-outline-variant/30 space-y-md">
+<h4 class="font-label-md text-on-surface-variant uppercase tracking-widest">Projected Cost Breakdown</h4>
+<div class="space-y-sm">
+<div class="flex justify-between font-body-sm text-on-surface-variant">
+<span>Direct Materials</span>
+<span>₱6,850.00</span>
+</div>
+<div class="flex justify-between font-body-sm text-on-surface-variant">
+<span>Labor (Est.)</span>
+<span>₱1,200.00</span>
+</div>
+<div class="flex justify-between font-body-sm text-on-surface-variant pb-sm border-b border-outline-variant/20">
+<span>Overhead</span>
+<span>₱370.00</span>
+</div>
+<div class="flex justify-between pt-sm">
+<span class="font-headline-md text-on-surface">Total Cost</span>
+<span class="font-headline-md text-primary">₱8,420.00</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-md">
+<button class="w-full bg-primary text-on-primary py-lg rounded-xl font-bold flex items-center justify-center gap-md hover:brightness-110 active:scale-95 transition-all cobalt-glow" onclick="openModal()">
+<span class="material-symbols-outlined">done_all</span>
+                    Mark completed
+                </button>
+<div class="grid grid-cols-2 gap-md">
+<button class="bg-surface-container border border-outline-variant/40 text-on-surface py-md rounded-xl font-semibold flex items-center justify-center gap-sm hover:bg-surface-variant/50 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-md">edit</span>
+                        Edit
+                    </button>
+<button class="bg-error/10 border border-error/30 text-error py-md rounded-xl font-semibold flex items-center justify-center gap-sm hover:bg-error/20 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-md">close</span>
+                        Cancel
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md py-sm pb-safe bg-surface-container/90 backdrop-blur-xl border-t border-outline-variant/30 shadow-lg">
+<div class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">dashboard</span>
+</div>
+<div class="flex items-center justify-center bg-secondary-container text-on-secondary-container rounded-full p-3 shadow-[0_0_15px_rgba(2,103,184,0.4)] transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</div>
+<div class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+</nav>
+<!-- Confirmation Modal -->
+<div class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm px-md" id="modalOverlay">
+<div class="bg-surface-container-high border border-outline-variant/30 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300" id="modalContent">
+<div class="p-lg space-y-md">
+<div class="w-16 h-16 bg-primary-container/20 rounded-full flex items-center justify-center mx-auto mb-lg">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'wght' 600;">inventory_2</span>
+</div>
+<div class="text-center space-y-sm">
+<h5 class="font-headline-md text-headline-md text-on-surface">Complete production?</h5>
+<p class="font-body-md text-on-surface-variant">Deduct ingredients/packaging and add finished goods to your inventory records.</p>
+</div>
+</div>
+<div class="flex gap-0 border-t border-outline-variant/20">
+<button class="flex-1 py-lg text-on-surface-variant font-bold hover:bg-surface-variant/50 transition-colors" onclick="closeModal()">
+                    Cancel
+                </button>
+<div class="w-[1px] bg-outline-variant/20"></div>
+<button class="flex-1 py-lg text-primary font-bold hover:bg-primary/10 transition-colors" onclick="closeModal()">
+                    Confirm complete
+                </button>
+</div>
+</div>
+</div>
+<script>
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalContent = document.getElementById('modalContent');
+
+        function openModal() {
+            modalOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modalOverlay.classList.add('hidden');
+            }, 300);
+        }
+
+        // Close on clicking overlay
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+    </script>
+</body></html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Asset Detail - ProdStock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"tertiary-fixed-dim": "#b6c6ef", "on-background": "#e2e2e6", "secondary-container": "#0267b8", "surface-variant": "#333538", "on-primary-fixed-variant": "#004395", "surface-container-low": "#1a1c1f", "outline-variant": "#424754", "on-primary": "#002e6a", "on-tertiary-fixed-variant": "#364768", "inverse-primary": "#005ac2", "tertiary-fixed": "#d8e2ff", "surface-container": "#1e2023", "on-secondary": "#00315d", "surface-dim": "#111316", "on-secondary-container": "#d6e5ff", "secondary-fixed-dim": "#a4c9ff", "on-surface-variant": "#c2c6d6", "primary-fixed": "#d8e2ff", "surface-container-lowest": "#0c0e11", "surface-container-high": "#282a2d", surface: "#111316", "on-surface": "#e2e2e6", "on-error-container": "#ffdad6", "secondary-fixed": "#d4e3ff", "on-secondary-fixed-variant": "#004883", "on-primary-fixed": "#001a42", "on-primary-container": "#00285d", secondary: "#a4c9ff", "error-container": "#93000a", "on-tertiary-container": "#182949", error: "#ffb4ab", "on-tertiary-fixed": "#081b3a", outline: "#8c909f", "tertiary-container": "#8091b6", "on-error": "#690005", "surface-bright": "#37393d", tertiary: "#b6c6ef", "on-secondary-fixed": "#001c39", "inverse-on-surface": "#2f3034", "primary-container": "#4d8eff", "inverse-surface": "#e2e2e6", "surface-container-highest": "#333538", background: "#111316", "primary-fixed-dim": "#adc6ff", "on-tertiary": "#1f3050", "surface-tint": "#adc6ff", primary: "#adc6ff"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {lg: "24px", base: "4px", xs: "4px", "container-margin": "24px", gutter: "16px", sm: "8px", md: "16px", xl: "40px"}, fontFamily: {"headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {"headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-xl": ["40px", {lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", fontWeight: "400"}], "label-sm": ["12px", {lineHeight: "14px", letterSpacing: "0.01em", fontWeight: "500"}], "label-md": ["14px", {lineHeight: "16px", fontWeight: "600"}], "headline-lg-mobile": ["24px", {lineHeight: "32px", fontWeight: "700"}]}}}};</script>
+<style>
+    body {
+      background-color: #121417;
+      color: #e2e2e6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .glass-card {
+      background: rgba(30, 33, 38, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(45, 49, 57, 0.5);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .status-chip {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+    }
+    .nav-active-glow {
+      box-shadow: 0 0 15px rgba(2, 103, 184, 0.4);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen pb-24 md:pb-0 font-body-md text-on-background">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-lg py-sm">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined p-2 hover:bg-surface-variant/50 transition-colors rounded-full active:scale-95 duration-200 text-on-surface-variant">arrow_back</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Asset detail</h1>
+</div>
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined p-2 hover:bg-surface-variant/50 transition-colors rounded-full active:scale-95 duration-200 text-on-surface-variant">search</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a manufacturing site manager wearing a sleek, branded dark polo shirt. The lighting is crisp and professional with a subtle blue rim light, set against a blurred industrial backdrop of high-tech machinery. The aesthetic is clean, corporate, and precise, mirroring the dark-themed high-performance UI of the dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5XAO5bC4Kg1x7km-ACqWzemBSA32X6fHTneksR9xZ1MtCn5Fm1i9DehTq2WqqIEQLi-UwoFYvHdNMw0gBqr0pkrgO98Hphhkc0w4OeiWSF6bGNJ_E-5NhGcLcy0mONyjQrKVmEtm0F1FO44vnOJofF32M1o3TtjvBmwGLI16VMIL90BTN1xZ0ExvbzpLw52OoE0vnq_gnbbhkJmnDdDKkIJyzC6Sa2tuvI6iDqMCLbQKCKJhFnGIQyf_3-BuMf-KX8EkYv4a9k9Yb"/>
+</div>
+</div>
+</header>
+<main class="pt-24 px-md max-w-5xl mx-auto space-y-md">
+<!-- Hero Section: Asset Summary -->
+<div class="glass-card rounded-xl p-lg overflow-hidden relative">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -mr-16 -mt-16 rounded-full"></div>
+<div class="flex flex-col md:flex-row gap-lg">
+<div class="w-full md:w-1/3 aspect-square rounded-lg overflow-hidden border border-outline-variant/50">
+<img class="w-full h-full object-cover" data-alt="A professional, high-resolution photograph of an industrial automatic filling machine on a clean manufacturing floor. The machine is made of polished stainless steel with intricate piping and digital control panels. The lighting is cool and sophisticated, with deep shadows and vibrant cobalt blue accents from LED indicators, conveying a sense of precision aerospace engineering." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2A1d5K31a9KlDaGGYSyb1jU686cykrvwQmHWcaCqvzMrKA8VKdpcDUfjpPPSQfVIQwlk6IpPVrEnXn8qzlJ9kv5hDeOvLY0blwkD7-BTWFdkDrOOuV39967dZgOdXijChR9PhAZ8Qxv9-hnvKFIhyltDoj0egKGyTrCZhWpOHxmtMGBKYba7urAls_6avahdkKATJI0MFCLJ0qhyPAFkasMwQzcuRJoX5e11NfweZE3UeTJBdr4L3IchEkqxHyxnU2Q-M1GA8Gtg5"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-sm">
+<span class="font-label-md text-label-md bg-secondary-container/20 text-secondary px-3 py-1 rounded-full border border-secondary/30">Type: Asset</span>
+<span class="status-chip px-3 py-1 rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-current"></span>
+                Active
+              </span>
+</div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg mb-base text-on-surface">Filling Machine</h2>
+<p class="text-on-surface-variant font-body-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+              Area: A4
+            </p>
+</div>
+<div class="grid grid-cols-2 gap-md mt-lg">
+<div class="p-md rounded-lg bg-surface-container-low border border-outline-variant/20">
+<p class="font-label-sm text-label-sm text-outline mb-xs">Quantity</p>
+<p class="font-headline-md text-headline-md text-primary">1</p>
+</div>
+<div class="p-md rounded-lg bg-surface-container-low border border-outline-variant/20">
+<p class="font-label-sm text-label-sm text-outline mb-xs">Condition</p>
+<p class="font-headline-md text-headline-md text-tertiary">Good</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<section class="grid grid-cols-3 gap-sm">
+<button class="flex flex-col items-center justify-center p-md rounded-xl glass-card hover:bg-primary/10 transition-all group active:scale-95">
+<span class="material-symbols-outlined mb-2 text-primary group-hover:scale-110 transition-transform">edit</span>
+<span class="font-label-md text-label-md text-on-surface">Edit</span>
+</button>
+<button class="flex flex-col items-center justify-center p-md rounded-xl glass-card hover:bg-secondary/10 transition-all group active:scale-95">
+<span class="material-symbols-outlined mb-2 text-secondary group-hover:scale-110 transition-transform">scale</span>
+<span class="font-label-md text-label-md text-on-surface">Adjust qty</span>
+</button>
+<button class="flex flex-col items-center justify-center p-md rounded-xl glass-card hover:bg-tertiary/10 transition-all group active:scale-95">
+<span class="material-symbols-outlined mb-2 text-tertiary group-hover:scale-110 transition-transform">note_add</span>
+<span class="font-label-md text-label-md text-on-surface">Add note</span>
+</button>
+</section>
+<!-- Detailed Info Bento -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- History Timeline -->
+<section class="glass-card rounded-xl p-md flex flex-col h-full">
+<div class="flex items-center justify-between mb-lg">
+<h3 class="font-headline-md text-headline-md text-on-surface">History</h3>
+<span class="material-symbols-outlined text-outline">history</span>
+</div>
+<div class="space-y-lg relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/30">
+<div class="relative flex gap-md pl-8">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-[14px] text-on-primary" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Checked today</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Routine maintenance verification completed.</p>
+</div>
+</div>
+<div class="relative flex gap-md pl-8">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-outline-variant flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-[14px] text-surface-container" style="font-variation-settings: 'FILL' 1;">move_down</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Moved to A4</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Asset relocated from Central Bay to Station A4.</p>
+<p class="font-label-sm text-label-sm text-outline mt-1">2 days ago</p>
+</div>
+</div>
+<div class="relative flex gap-md pl-8">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-outline-variant flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-[14px] text-surface-container" style="font-variation-settings: 'FILL' 1;">add</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Added to inventory</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">New asset registration and labeling.</p>
+<p class="font-label-sm text-label-sm text-outline mt-1">Oct 12, 2023</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Machine Diagnostics / Metadata -->
+<section class="space-y-md">
+<div class="glass-card rounded-xl p-md">
+<h3 class="font-label-md text-label-md text-outline mb-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">analytics</span>
+            METADATA
+          </h3>
+<div class="space-y-sm">
+<div class="flex justify-between py-2 border-b border-outline-variant/10">
+<span class="text-on-surface-variant font-body-sm">Last checked</span>
+<span class="text-primary font-label-md">Today, 09:45</span>
+</div>
+<div class="flex justify-between py-2 border-b border-outline-variant/10">
+<span class="text-on-surface-variant font-body-sm">Serial Number</span>
+<span class="text-on-surface font-label-md">FM-992-BX</span>
+</div>
+<div class="flex justify-between py-2 border-b border-outline-variant/10">
+<span class="text-on-surface-variant font-body-sm">Department</span>
+<span class="text-on-surface font-label-md">Bottling Line 3</span>
+</div>
+<div class="flex justify-between py-2">
+<span class="text-on-surface-variant font-body-sm">Manufacturer</span>
+<span class="text-on-surface font-label-md">AeroFill Systems</span>
+</div>
+</div>
+</div>
+<!-- Stock Level Gauge -->
+<div class="glass-card rounded-xl p-md bg-[#1A2B4B] border-primary/20">
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-label-md text-label-md text-secondary-fixed">HEALTH STATUS</h3>
+<span class="text-on-secondary-container font-headline-md">94%</span>
+</div>
+<div class="h-3 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-secondary-container to-secondary w-[94%] rounded-full relative">
+<div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+</div>
+</div>
+<p class="text-on-surface-variant text-body-sm mt-md">System diagnostics report optimal performance levels for current workload.</p>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 bg-surface-container/90 backdrop-blur-xl border-t border-outline-variant/30 flex justify-around items-center px-md py-sm pb-safe shadow-lg rounded-t-xl">
+<div class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">dashboard</span>
+</div>
+<div class="flex items-center justify-center bg-secondary-container text-on-secondary-container rounded-full p-3 nav-active-glow active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</div>
+<div class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</div>
+<div class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+</nav>
+<!-- Interaction Script -->
+<script>
+    // Simple micro-interactions
+    document.querySelectorAll('.active\\:scale-95').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Feedback haptic simulation or sound if needed
+      });
+    });
+  </script>
+</body></html>

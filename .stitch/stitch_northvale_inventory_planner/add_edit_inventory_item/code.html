@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Add Item | ProdStock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"tertiary-fixed-dim": "#b6c6ef", "on-background": "#e2e2e6", "secondary-container": "#0267b8", "surface-variant": "#333538", "on-primary-fixed-variant": "#004395", "surface-container-low": "#1a1c1f", "outline-variant": "#424754", "on-primary": "#002e6a", "on-tertiary-fixed-variant": "#364768", "inverse-primary": "#005ac2", "tertiary-fixed": "#d8e2ff", "surface-container": "#1e2023", "on-secondary": "#00315d", "surface-dim": "#111316", "on-secondary-container": "#d6e5ff", "secondary-fixed-dim": "#a4c9ff", "on-surface-variant": "#c2c6d6", "primary-fixed": "#d8e2ff", "surface-container-lowest": "#0c0e11", "surface-container-high": "#282a2d", surface: "#111316", "on-surface": "#e2e2e6", "on-error-container": "#ffdad6", "secondary-fixed": "#d4e3ff", "on-secondary-fixed-variant": "#004883", "on-primary-fixed": "#001a42", "on-primary-container": "#00285d", secondary: "#a4c9ff", "error-container": "#93000a", "on-tertiary-container": "#182949", error: "#ffb4ab", "on-tertiary-fixed": "#081b3a", outline: "#8c909f", "tertiary-container": "#8091b6", "on-error": "#690005", "surface-bright": "#37393d", tertiary: "#b6c6ef", "on-secondary-fixed": "#001c39", "inverse-on-surface": "#2f3034", "primary-container": "#4d8eff", "inverse-surface": "#e2e2e6", "surface-container-highest": "#333538", background: "#111316", "primary-fixed-dim": "#adc6ff", "on-tertiary": "#1f3050", "surface-tint": "#adc6ff", primary: "#adc6ff"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {lg: "24px", base: "4px", xs: "4px", "container-margin": "24px", gutter: "16px", sm: "8px", md: "16px", xl: "40px"}, fontFamily: {"headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {"headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-xl": ["40px", {lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", fontWeight: "400"}], "label-sm": ["12px", {lineHeight: "14px", letterSpacing: "0.01em", fontWeight: "500"}], "label-md": ["14px", {lineHeight: "16px", fontWeight: "600"}], "headline-lg-mobile": ["24px", {lineHeight: "32px", fontWeight: "700"}]}}}};</script>
+<style>
+        body {
+            background-color: #121417;
+            color: #e2e2e6;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 33, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 49, 57, 0.5);
+        }
+        .input-glow:focus {
+            box-shadow: 0 0 0 2px rgba(173, 198, 255, 0.2);
+            border-color: #adc6ff;
+        }
+        .button-bloom:hover {
+            box-shadow: 0 0 15px rgba(173, 198, 255, 0.3);
+        }
+        /* Custom scrollbar for data density */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111316;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #424754;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen font-body-md text-on-background">
+<!-- TopAppBar - Shared Component -->
+<header class="fixed top-0 w-full z-50 bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-lg py-sm">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant active:scale-95 duration-200 p-2 rounded-full hover:bg-surface-variant/50">arrow_back</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Add item</h1>
+</div>
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A professional warehouse manager portrait with sharp focus and cinematic lighting in a tech-industrial setting. The lighting is cold with blue and white accents, reflecting the precision aerospace aesthetic. The background features blurred high-tech inventory shelves in a charcoal and cobalt color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCy1Pp8U5WE-pLhby_8gHVJOkQDNk5oPBtB9PDGRfklusbv6raWz8M0Ro42fauw1puL7Lmvh4xkFz6SGwh1dRRDZ5wF3_D0r9o9sxLpjd44hjLvOA2fjfoysr7YpwquVcsXHvIp910DDmhjGLh8vpsqIT8d92jGYcu_NSqDAFRm-zRdZPrv8MG_p8AUi79S4nhQIaEVi6uLil45Et-10UzqHjobQ5vqOrNe96naOjLhJbmu9ypaZfSPfC_T_Ja5IFx9MeAVjsimQ7KC"/>
+</div>
+</div>
+</header>
+<main class="pt-[72px] pb-[100px] px-lg max-w-2xl mx-auto">
+<!-- Form Section -->
+<section class="mt-lg space-y-lg">
+<!-- Hero Asset / Decoration -->
+<div class="relative w-full h-32 rounded-xl overflow-hidden glass-panel mb-xl">
+<div class="absolute inset-0 flex flex-col justify-center px-lg">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">New Inventory Entry</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Fill out the details to register a new stock unit.</p>
+</div>
+</div>
+<form class="space-y-md">
+<!-- Essential Info -->
+<div class="space-y-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant px-base">Item name (req)</label>
+<input class="w-full h-14 px-md rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-body-md placeholder:text-outline/50 focus:ring-0 focus:outline-none input-glow transition-all" placeholder="e.g., Titanium Fasteners X-9" required="" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant px-base">Item type</label>
+<div class="relative">
+<select class="w-full h-14 pl-md pr-xl rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-body-md appearance-none focus:ring-0 focus:outline-none input-glow transition-all">
+<option>Raw Material</option>
+<option>Component</option>
+<option>Finished Good</option>
+<option>MRO Supplies</option>
+</select>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<div class="space-y-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant px-base">Unit</label>
+<div class="relative">
+<select class="w-full h-14 pl-md pr-xl rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-body-md appearance-none focus:ring-0 focus:outline-none input-glow transition-all">
+<option>pcs</option>
+<option>kg</option>
+<option>liters</option>
+<option>meters</option>
+<option>boxes</option>
+</select>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Stock Levels -->
+<div class="p-lg rounded-2xl bg-surface-container/50 border border-outline-variant/20 space-y-md">
+<div class="flex items-center gap-sm mb-sm">
+<span class="material-symbols-outlined text-secondary">inventory_2</span>
+<h3 class="font-label-md text-label-md text-secondary uppercase">Stock Management</h3>
+</div>
+<div class="space-y-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant px-base">Current stock (num req)</label>
+<input class="w-full h-14 px-md rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-body-md focus:ring-0 focus:outline-none input-glow transition-all" placeholder="0" required="" type="number"/>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant px-base">Min stock</label>
+<input class="w-full h-14 px-md rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-body-md focus:ring-0 focus:outline-none input-glow transition-all" placeholder="50" type="number"/>
+</div>
+<div class="space-y-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant px-base">Unit cost ($)</label>
+<input class="w-full h-14 px-md rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-body-md focus:ring-0 focus:outline-none input-glow transition-all" placeholder="0.00" step="0.01" type="number"/>
+</div>
+</div>
+</div>
+<!-- Location -->
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant px-base">Area code</label>
+<div class="relative">
+<select class="w-full h-14 pl-md pr-xl rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-body-md appearance-none focus:ring-0 focus:outline-none input-glow transition-all">
+<option>A1</option>
+<option>A2</option>
+<option>A3</option>
+<option>A4</option>
+</select>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">location_on</span>
+</div>
+</div>
+<div class="space-y-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant px-base">Rack/Bin</label>
+<input class="w-full h-14 px-md rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-body-md focus:ring-0 focus:outline-none input-glow transition-all" placeholder="R4-B12" type="text"/>
+</div>
+</div>
+<!-- Notes -->
+<div class="space-y-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant px-base">Notes</label>
+<textarea class="w-full p-md rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-body-md focus:ring-0 focus:outline-none input-glow transition-all resize-none" placeholder="Additional item specifications or handling instructions..." rows="3"></textarea>
+</div>
+<!-- Actions -->
+<div class="pt-lg flex flex-col gap-md">
+<button class="w-full h-14 rounded-xl bg-secondary-container text-on-secondary-container font-label-md text-md flex items-center justify-center gap-sm active:scale-95 transition-all button-bloom shadow-lg" type="submit">
+<span class="material-symbols-outlined">save</span>
+                        Save item
+                    </button>
+<button class="w-full h-14 rounded-xl border border-outline text-on-surface-variant font-label-md text-md active:scale-95 transition-all hover:bg-surface-variant/20" type="button">
+                        Cancel
+                    </button>
+</div>
+</form>
+</section>
+</main>
+<!-- BottomNavBar - Shared Component -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-surface-container/90 backdrop-blur-xl border-t border-outline-variant/30 flex justify-around items-center px-md py-sm pb-safe shadow-lg rounded-t-xl">
+<a class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+</a>
+<a class="flex items-center justify-center bg-secondary-container text-on-secondary-container rounded-full p-3 shadow-[0_0_15px_rgba(2,103,184,0.4)] active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">analytics</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions for form inputs
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.querySelector('label')?.classList.add('text-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.querySelector('label')?.classList.remove('text-primary');
+            });
+        });
+
+        // Form submission animation mock
+        document.querySelector('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Processing...';
+            btn.classList.add('opacity-80', 'pointer-events-none');
+            
+            setTimeout(() => {
+                btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Item Saved';
+                btn.classList.replace('bg-secondary-container', 'bg-emerald-600');
+                btn.classList.replace('text-on-secondary-container', 'text-white');
+                
+                setTimeout(() => {
+                    // Simulation of redirecting back to inventory
+                    console.log('Redirecting...');
+                }, 1000);
+            }, 1500);
+        });
+    </script>
+</body></html>

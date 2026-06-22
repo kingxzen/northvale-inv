@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Product Library - ProdStock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #111316;
+            color: #e2e2e6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-card {
+            background: rgba(30, 33, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 49, 57, 0.5);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .cobalt-glow {
+            box-shadow: 0 0 15px rgba(2, 103, 184, 0.4);
+        }
+        .product-row {
+            height: 110px;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111316;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333538;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {background: "#111316", surface: "#111316", "on-background": "#e2e2e6", primary: "#adc6ff", "secondary-container": "#0267b8", "on-secondary-container": "#d6e5ff", "surface-container": "#1e2023", "surface-container-high": "#282a2d", "surface-variant": "#333538", "outline-variant": "#424754", "on-surface": "#e2e2e6", "on-surface-variant": "#c2c6d6", outline: "#8c909f", "surface-bright": "#37393d", "secondary-fixed": "#d4e3ff", "surface-container-low": "#1a1c1f", "on-error-container": "#ffdad6", "tertiary-fixed": "#d8e2ff", "surface-dim": "#111316", "on-secondary-fixed-variant": "#004883", "inverse-surface": "#e2e2e6", "on-primary-fixed": "#001a42", "surface-container-highest": "#333538", "primary-fixed": "#d8e2ff", secondary: "#a4c9ff", "surface-tint": "#adc6ff", "on-primary-container": "#00285d", "on-primary": "#002e6a", "on-secondary": "#00315d", "inverse-primary": "#005ac2", "on-tertiary-fixed": "#081b3a", "surface-container-lowest": "#0c0e11", "on-secondary-fixed": "#001c39", "error-container": "#93000a", "secondary-fixed-dim": "#a4c9ff", "primary-container": "#4d8eff", "on-tertiary": "#1f3050", error: "#ffb4ab", "on-primary-fixed-variant": "#004395", "on-tertiary-container": "#182949", "on-tertiary-fixed-variant": "#364768", "primary-fixed-dim": "#adc6ff", tertiary: "#b6c6ef", "inverse-on-surface": "#2f3034", "tertiary-container": "#8091b6", "tertiary-fixed-dim": "#b6c6ef", "on-error": "#690005"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "40px"}, fontFamily: {headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {}}}};</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/20 flex justify-between items-center px-md py-sm h-16">
+<div class="flex items-center gap-sm">
+<h1 class="font-bold text-lg text-primary tracking-tight">ProdStock</h1>
+</div>
+<div class="flex items-center gap-xs">
+<button class="p-2 rounded-full hover:bg-surface-variant/50 transition-colors text-on-surface-variant active:scale-95">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-variant/50 transition-colors text-on-surface-variant active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 ml-2">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDARnTLhkw3XVlasHnoPFYYpMI8agPBELLy4luP7cqux647w4D-fGuue8TEHNPEDSOvlTxP2--Cg21y_997SArlvAT1k9_UO9GvQvj664zA95ayp4ceIVJwfADbaWjeXnDkgPpaDvjzbEBmjCnBtJ2S3GRosLYca3g7RQIKc0T_CRrjgjgyUHOOWj-KkvjKKqhX_9klnWvs2mqmJFNnXmLJwxYXjQYwh3sNk_4z6zlGdFxc2KnMr_Kq7J58hxxHhQwVKKSOr8iJ5ZnP"/>
+</div>
+</div>
+</header>
+<main class="pt-20 px-md max-w-lg mx-auto">
+<!-- Compact Header -->
+<div class="flex items-center justify-between mb-md">
+<h2 class="text-xl font-bold text-on-background">Products / BOM</h2>
+<button class="flex items-center justify-center gap-1 bg-secondary-container text-on-secondary-container text-xs font-semibold px-3 py-2 rounded-lg cobalt-glow active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+                Add product / BOM
+            </button>
+</div>
+<!-- Search Bar -->
+<div class="relative mb-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
+<input class="w-full bg-surface-container border border-outline-variant/20 rounded-xl py-2.5 pl-10 pr-4 text-sm text-on-surface placeholder:text-outline/60 focus:border-primary focus:ring-0 outline-none transition-all" placeholder="Search product library..." type="text"/>
+</div>
+<!-- Product List -->
+<div class="flex flex-col gap-2">
+<!-- Row 1 -->
+<div class="glass-card product-row rounded-xl p-3 flex items-center gap-3 hover:bg-surface-variant/20 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container-high border border-outline-variant/20">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZC4V9qmgZTJEH1sdfs7Gt6l8j6VK55L53Qsz7QwwD3G_w2Gajo5lROwCzEPKtUiP6VIv6mrSzc7dJP5WkblTFxU_ONWelw6C1-THpS7zZDy_05MZhffs_NBHYnFOoNceWuNdz9809c9SCiy4hHxvkkb1XUzxUBKGfmN3V_8eIJ1b6RevMwvhxIrU8VCgfL9albmGZ6oyxvkHNDtrl1Z66qFANGYAND9ZWvuEtlVqovSVjG5gLpbWL2KOTjVUKC9AraC0iP9oWYbMA"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-sm text-on-background truncate">Keeva Airzen Lavender</h3>
+<span class="material-symbols-outlined text-outline text-lg">chevron_right</span>
+</div>
+<p class="text-[11px] font-medium text-primary mt-0.5">KEEVA-AIRZEN-LAV</p>
+<p class="text-xs text-on-surface-variant mt-1">Lavender • Air Freshener</p>
+<p class="text-[10px] text-outline mt-1 font-medium">Batch 3000 ml • 7 BOM items</p>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="glass-card product-row rounded-xl p-3 flex items-center gap-3 hover:bg-surface-variant/20 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container-high border border-outline-variant/20">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPukU3XCr_tyOnHHE3rhcypoIPQHeFOXlHM9KQY-7Xq8EZ4Yf-i0O6bq8t17yNOeR0iQQ-xY4AIbc1SedqHBTI-IYgoFWH0ypbIYq_VG1F1lS9JbQP9_xWVCPdZ9zb3F8zld_v9Ie_2hzHiBOZqIVl_URiqxV4WbBeNAGstO_4c7DGLsBOPW6LYjcPVfAfjoXND1omWg9PzFrx3lVm1TRJ2gLCld37B9QVp1LKi_A2yeq32CsKtuJQKKMis6CgHfPCQE_mT5SWo1OR"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-sm text-on-background truncate">Keeva Airzen Ocean</h3>
+<span class="material-symbols-outlined text-outline text-lg">chevron_right</span>
+</div>
+<p class="text-[11px] font-medium text-primary mt-0.5">KEEVA-AIRZEN-OCN</p>
+<p class="text-xs text-on-surface-variant mt-1">Ocean Breeze • Air Freshener</p>
+<p class="text-[10px] text-outline mt-1 font-medium">Batch 3000 ml • 7 BOM items</p>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="glass-card product-row rounded-xl p-3 flex items-center gap-3 hover:bg-surface-variant/20 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container-high border border-outline-variant/20">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx9cdWN6WzxIwYljT_6IebzR3g4DgH4Lq7mFp_Ab2VkTohk7Xk9I4qGSEDUrdKo28bSqycSp3CcOP--BkgCXYhjiXlzugcPSLp5ZHk8lXdHw7uVBbwRtGw8KrNl8ZZhMnGq1U_d7FTAILx-Y1VoNEP2vfoFBOH34riq1dMJR9CNHbd00cHvcyKZCwWY1Rg3k4hqxZH7Ayoq9QDb60kaZhT6SP7mxQPozyrhzrW6d93jg1YA-rqfgM6MsPXeTzhW6jdXgUjQLQLTNHS"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-sm text-on-background truncate">Keeva Airzen Sampaguita</h3>
+<span class="material-symbols-outlined text-outline text-lg">chevron_right</span>
+</div>
+<p class="text-[11px] font-medium text-primary mt-0.5">KEEVA-AIRZEN-SMP</p>
+<p class="text-xs text-on-surface-variant mt-1">Sampaguita • Air Freshener</p>
+<p class="text-[10px] text-outline mt-1 font-medium">Batch 3000 ml • 7 BOM items</p>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="glass-card product-row rounded-xl p-3 flex items-center gap-3 hover:bg-surface-variant/20 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container-high border border-outline-variant/20 bg-center bg-cover" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDARnTLhkw3XVlasHnoPFYYpMI8agPBELLy4luP7cqux647w4D-fGuue8TEHNPEDSOvlTxP2--Cg21y_997SArlvAT1k9_UO9GvQvj664zA95ayp4ceIVJwfADbaWjeXnDkgPpaDvjzbEBmjCnBtJ2S3GRosLYca3g7RQIKc0T_CRrjgjgyUHOOWj-KkvjKKqhX_9klnWvs2mqmJFNnXmLJwxYXjQYwh3sNk_4z6zlGdFxc2KnMr_Kq7J58hxxHhQwVKKSOr8iJ5ZnP');">
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-sm text-on-background truncate">Keeva Airzen Lemon</h3>
+<span class="material-symbols-outlined text-outline text-lg">chevron_right</span>
+</div>
+<p class="text-[11px] font-medium text-primary mt-0.5">KEEVA-AIRZEN-LMN</p>
+<p class="text-xs text-on-surface-variant mt-1">Lemon Zest • Air Freshener</p>
+<p class="text-[10px] text-outline mt-1 font-medium">Batch 3000 ml • 7 BOM items</p>
+</div>
+</div>
+<!-- Row 5 -->
+<div class="glass-card product-row rounded-xl p-3 flex items-center gap-3 hover:bg-surface-variant/20 transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container-high border border-outline-variant/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">inventory_2</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-sm text-on-background truncate">Keeva Airzen Eucalyptus</h3>
+<span class="material-symbols-outlined text-outline text-lg">chevron_right</span>
+</div>
+<p class="text-[11px] font-medium text-primary mt-0.5">KEEVA-AIRZEN-EUC</p>
+<p class="text-xs text-on-surface-variant mt-1">Eucalyptus • Air Freshener</p>
+<p class="text-[10px] text-outline mt-1 font-medium">Batch 3000 ml • 7 BOM items</p>
+</div>
+</div>
+</div>
+<!-- Recent Activity Section (Condensed) -->
+<div class="mt-md">
+<div class="flex items-center justify-between mb-2">
+<h3 class="text-xs font-bold text-outline uppercase tracking-wider">Recent Modifications</h3>
+<span class="material-symbols-outlined text-outline text-sm">history</span>
+</div>
+<div class="glass-card rounded-xl overflow-hidden text-[11px]">
+<div class="flex justify-between p-3 border-b border-outline-variant/10 bg-surface-container/30">
+<span class="font-bold text-on-background truncate w-1/2">KV-LZ-400 Fragrance</span>
+<span class="text-on-surface-variant italic">M. Rodriguez</span>
+<span class="text-emerald-400 font-bold">APPROVED</span>
+</div>
+<div class="flex justify-between p-3 bg-surface-dim">
+<span class="font-bold text-on-background truncate w-1/2">KV-OC-400 Supplier</span>
+<span class="text-on-surface-variant italic">J. Chen</span>
+<span class="text-amber-400 font-bold">PENDING</span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md py-sm pb-safe bg-surface-container/90 backdrop-blur-xl border-t border-outline-variant/30 shadow-lg md:hidden">
+<button class="flex items-center justify-center text-on-surface-variant p-3 hover:text-primary transition-all active:scale-90">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<button class="flex items-center justify-center bg-secondary-container text-on-secondary-container rounded-full p-3 shadow-lg active:scale-90 cobalt-glow">
+<span class="material-symbols-outlined">inventory_2</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant p-3 hover:text-primary transition-all active:scale-90">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant p-3 hover:text-primary transition-all active:scale-90">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+</nav>
+<!-- Desktop Sidebar (Hidden on mobile) -->
+<aside class="hidden md:flex fixed left-0 top-0 h-screen w-20 flex-col items-center py-xl gap-lg bg-surface-container border-r border-outline-variant/20 z-[60]">
+<div class="mb-lg">
+<span class="material-symbols-outlined text-primary text-[32px] font-bold">rocket_launch</span>
+</div>
+<button class="p-3 rounded-xl text-on-surface-variant hover:bg-surface-variant/50 transition-all">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<button class="p-3 rounded-xl bg-secondary-container text-on-secondary-container shadow-lg">
+<span class="material-symbols-outlined">inventory_2</span>
+</button>
+<button class="p-3 rounded-xl text-on-surface-variant hover:bg-surface-variant/50 transition-all">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</button>
+<button class="p-3 rounded-xl text-on-surface-variant hover:bg-surface-variant/50 transition-all">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+<div class="mt-auto">
+<button class="p-3 rounded-xl text-on-surface-variant hover:bg-surface-variant/50 transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</aside>
+<script>
+        // Micro-interactions for list rows
+        document.querySelectorAll('.product-row').forEach(row => {
+            row.addEventListener('touchstart', () => {
+                row.style.backgroundColor = 'rgba(51, 53, 56, 0.5)';
+            });
+            row.addEventListener('touchend', () => {
+                row.style.backgroundColor = '';
+            });
+        });
+    </script>
+</body></html>

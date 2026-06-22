@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Activity Log | ProdStock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"tertiary-fixed-dim": "#b6c6ef", "on-background": "#e2e2e6", "secondary-container": "#0267b8", "surface-variant": "#333538", "on-primary-fixed-variant": "#004395", "surface-container-low": "#1a1c1f", "outline-variant": "#424754", "on-primary": "#002e6a", "on-tertiary-fixed-variant": "#364768", "inverse-primary": "#005ac2", "tertiary-fixed": "#d8e2ff", "surface-container": "#1e2023", "on-secondary": "#00315d", "surface-dim": "#111316", "on-surface": "#e2e2e6", "on-error-container": "#ffdad6", "secondary-fixed": "#d4e3ff", "on-secondary-fixed-variant": "#004883", "on-primary-fixed": "#001a42", "on-primary-container": "#00285d", secondary: "#a4c9ff", "error-container": "#93000a", "on-tertiary-container": "#182949", error: "#ffb4ab", "on-tertiary-fixed": "#081b3a", outline: "#8c909f", "tertiary-container": "#8091b6", "on-error": "#690005", "surface-bright": "#37393d", tertiary: "#b6c6ef", "on-secondary-fixed": "#001c39", "inverse-on-surface": "#2f3034", "primary-container": "#4d8eff", "inverse-surface": "#e2e2e6", "surface-container-highest": "#333538", background: "#111316", "primary-fixed-dim": "#adc6ff", "on-tertiary": "#1f3050", "surface-tint": "#adc6ff", primary: "#adc6ff", "primary-fixed": "#d8e2ff", "surface-container-lowest": "#0c0e11", "secondary-fixed-dim": "#a4c9ff", "on-secondary-container": "#d6e5ff", "surface-container-high": "#282a2d", surface: "#111316", "on-surface-variant": "#c2c6d6"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {lg: "24px", base: "4px", xs: "4px", "container-margin": "24px", gutter: "16px", sm: "8px", md: "16px", xl: "40px"}, fontFamily: {"headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {"headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-xl": ["40px", {lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", fontWeight: "400"}], "label-sm": ["12px", {lineHeight: "14px", letterSpacing: "0.01em", fontWeight: "500"}], "label-md": ["14px", {lineHeight: "16px", fontWeight: "600"}], "headline-lg-mobile": ["24px", {lineHeight: "32px", fontWeight: "700"}]}}}};</script>
+<style>
+        body {
+            background-color: #111316;
+            color: #e2e2e6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-panel {
+            background: rgba(30, 33, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 49, 57, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2D3139;
+            border-radius: 10px;
+        }
+        .active-filter {
+            background-color: #0267b8;
+            color: #d6e5ff;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-24">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-lg py-sm">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-primary/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a senior logistics manager in a modern industrial setting. The lighting is sophisticated with cool blue tones, highlighting a clean corporate aesthetic. The background features a blurred high-tech warehouse environment with soft glowing interfaces, maintaining a premium and authoritative atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACzNm_OMhGzsH4SrKfEQPz2nnKVmYFdoqC-09TaM3JZQUGXK4qg3Rb4qhTsLyj2XLGaY6sBmACCygymfTZszfJBkWyB_9OmjHgutLdT69PApFF-aIMoUZuqFfOZGekL7ojcPkI_JukFetAHgs2JwP5RU9MbTQEvxTd3EJXkGmgqYFUyq_jtRvVbnRLQrxKb3DF_1f5MCp16Qxb6dhIatcAtPyvy8lM-QyYN6kmsuRqGd6XTYoPhmbySrUaX9BjMBbW0WWqQevySpyo"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">ProdStock</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+</header>
+<main class="pt-24 px-md max-w-5xl mx-auto">
+<!-- Title & Page Header -->
+<div class="mb-lg">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface mb-xs">Activity log</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Real-time audit of production and inventory shifts.</p>
+</div>
+<!-- Filters Section -->
+<div class="flex flex-wrap gap-sm mb-lg overflow-x-auto pb-2 no-scrollbar">
+<button class="active-filter px-md py-2 rounded-full font-label-md text-label-md transition-all active:scale-95">All</button>
+<button class="bg-surface-container hover:bg-surface-variant/50 px-md py-2 rounded-full text-on-surface-variant font-label-md text-label-md transition-all active:scale-95">Stock</button>
+<button class="bg-surface-container hover:bg-surface-variant/50 px-md py-2 rounded-full text-on-surface-variant font-label-md text-label-md transition-all active:scale-95">Production</button>
+<button class="bg-surface-container hover:bg-surface-variant/50 px-md py-2 rounded-full text-on-surface-variant font-label-md text-label-md transition-all active:scale-95">Product</button>
+<button class="bg-surface-container hover:bg-surface-variant/50 px-md py-2 rounded-full text-on-surface-variant font-label-md text-label-md transition-all active:scale-95">Adjustment</button>
+</div>
+<!-- Activity Log Content -->
+<div class="space-y-sm">
+<!-- Log Entry 1: Adjustment -->
+<div class="glass-panel p-md rounded-xl flex items-start gap-md group hover:bg-surface-variant/30 transition-all duration-300">
+<div class="w-10 h-10 shrink-0 rounded-lg bg-error-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">tune</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-on-surface mb-1">SLES adjusted to 12kg</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">2m ago</span>
+</div>
+<div class="flex items-center gap-xs mb-2">
+<span class="font-label-sm text-label-sm text-secondary">By Admin</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Reason: actual count</span>
+</div>
+<div class="inline-flex items-center px-2 py-0.5 rounded bg-error-container/15 text-error text-[10px] font-bold tracking-wider uppercase">
+                        Adjustment
+                    </div>
+</div>
+</div>
+<!-- Log Entry 2: Stock -->
+<div class="glass-panel p-md rounded-xl flex items-start gap-md group hover:bg-surface-variant/30 transition-all duration-300">
+<div class="w-10 h-10 shrink-0 rounded-lg bg-secondary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-on-surface mb-1">Bottle 500ml stock in 500pcs</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">45m ago</span>
+</div>
+<div class="flex items-center gap-xs mb-2">
+<span class="font-label-sm text-label-sm text-secondary">Inbound Shipment</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">WH-North Sector</span>
+</div>
+<div class="inline-flex items-center px-2 py-0.5 rounded bg-secondary-container/15 text-secondary text-[10px] font-bold tracking-wider uppercase">
+                        Stock
+                    </div>
+</div>
+</div>
+<!-- Log Entry 3: Production -->
+<div class="glass-panel p-md rounded-xl flex items-start gap-md group hover:bg-surface-variant/30 transition-all duration-300">
+<div class="w-10 h-10 shrink-0 rounded-lg bg-tertiary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">precision_manufacturing</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-on-surface mb-1">Keeva Airzen Lavender production completed</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">2h ago</span>
+</div>
+<div class="flex items-center gap-xs mb-2">
+<span class="font-label-sm text-label-sm text-secondary">Batch #KV-882</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Line A2</span>
+</div>
+<div class="inline-flex items-center px-2 py-0.5 rounded bg-tertiary-container/15 text-tertiary text-[10px] font-bold tracking-wider uppercase">
+                        Production
+                    </div>
+</div>
+</div>
+<!-- Log Entry 4: Product -->
+<div class="glass-panel p-md rounded-xl flex items-start gap-md group hover:bg-surface-variant/30 transition-all duration-300">
+<div class="w-10 h-10 shrink-0 rounded-lg bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">category</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-on-surface mb-1">BOM updated</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">5h ago</span>
+</div>
+<div class="flex items-center gap-xs mb-2">
+<span class="font-label-sm text-label-sm text-secondary">Keeva Fresh Linen</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Fragrance oil dosage changed</span>
+</div>
+<div class="inline-flex items-center px-2 py-0.5 rounded bg-primary-container/15 text-primary text-[10px] font-bold tracking-wider uppercase">
+                        Product
+                    </div>
+</div>
+</div>
+<!-- Additional Entries for Visual Depth -->
+<div class="glass-panel p-md rounded-xl flex items-start gap-md opacity-70 group hover:bg-surface-variant/30 transition-all duration-300">
+<div class="w-10 h-10 shrink-0 rounded-lg bg-secondary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-on-surface mb-1">Low stock alert: Caustic Soda</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">Yesterday</span>
+</div>
+<div class="flex items-center gap-xs mb-2">
+<span class="font-label-sm text-label-sm text-secondary">System Warning</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Current: 50kg | Reorder: 100kg</span>
+</div>
+<div class="inline-flex items-center px-2 py-0.5 rounded bg-secondary-container/15 text-secondary text-[10px] font-bold tracking-wider uppercase">
+                        Stock
+                    </div>
+</div>
+</div>
+</div>
+<!-- Export Action (Floating Contextual Action) -->
+<div class="mt-lg flex justify-center">
+<button class="flex items-center gap-sm bg-secondary-container text-on-secondary-container px-lg py-md rounded-full shadow-lg font-label-md text-label-md hover:bg-secondary-container/90 transition-all active:scale-95 shadow-[0_0_20px_rgba(2,103,184,0.3)]">
+<span class="material-symbols-outlined">download</span>
+                Export Log
+            </button>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-surface-container/90 backdrop-blur-xl border-t border-outline-variant/30 flex justify-around items-center px-md py-sm pb-safe shadow-lg rounded-t-xl">
+<a class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</a>
+<a class="flex items-center justify-center bg-secondary-container text-on-secondary-container rounded-full p-3 shadow-[0_0_15px_rgba(2,103,184,0.4)] active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">analytics</span>
+</a>
+</nav>
+<script>
+        // Subtle micro-interactions for list items
+        document.querySelectorAll('.glass-panel').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+                card.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.4)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = 'none';
+            });
+        });
+
+        // Filter toggle logic
+        const filterButtons = document.querySelectorAll('button[class*="rounded-full"]');
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if(btn.innerText === "Export Log") return;
+                filterButtons.forEach(b => {
+                    b.classList.remove('active-filter');
+                    b.classList.add('bg-surface-container', 'text-on-surface-variant');
+                });
+                btn.classList.add('active-filter');
+                btn.classList.remove('bg-surface-container', 'text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --font-jakarta: "Plus Jakarta Sans";
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #111316;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(77, 142, 255, 0.14), transparent 34rem),
+    #111316;
+  color: #e2e2e6;
+  font-family: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111316;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333538;
+  border-radius: 9999px;
+}
+
+@layer components {
+  .glass-nav {
+    background: rgba(30, 33, 38, 0.78);
+    border-top: 1px solid rgba(66, 71, 84, 0.65);
+    backdrop-filter: blur(14px);
+  }
+
+  .premium-card {
+    background: rgba(30, 32, 35, 0.96);
+    border: 1px solid rgba(66, 71, 84, 0.72);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}

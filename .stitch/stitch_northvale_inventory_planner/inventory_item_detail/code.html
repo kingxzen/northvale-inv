@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SLES Item Detail | ProdStock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"tertiary-fixed-dim": "#b6c6ef", "on-background": "#e2e2e6", "secondary-container": "#0267b8", "surface-variant": "#333538", "on-primary-fixed-variant": "#004395", "surface-container-low": "#1a1c1f", "outline-variant": "#424754", "on-primary": "#002e6a", "on-tertiary-fixed-variant": "#364768", "inverse-primary": "#005ac2", "tertiary-fixed": "#d8e2ff", "surface-container": "#1e2023", "on-secondary": "#00315d", "surface-dim": "#111316", "on-surface": "#e2e2e6", "on-error-container": "#ffdad6", "secondary-fixed": "#d4e3ff", "on-secondary-fixed-variant": "#004883", "on-primary-fixed": "#001a42", "on-primary-container": "#00285d", secondary: "#a4c9ff", "error-container": "#93000a", "on-tertiary-container": "#182949", error: "#ffb4ab", "on-tertiary-fixed": "#081b3a", outline: "#8c909f", "tertiary-container": "#8091b6", "on-error": "#690005", "surface-bright": "#37393d", tertiary: "#b6c6ef", "on-secondary-fixed": "#001c39", "inverse-on-surface": "#2f3034", "primary-container": "#4d8eff", "inverse-surface": "#e2e2e6", "surface-container-highest": "#333538", background: "#111316", "primary-fixed-dim": "#adc6ff", "on-tertiary": "#1f3050", "surface-tint": "#adc6ff", primary: "#adc6ff", "primary-fixed": "#d8e2ff", "surface-container-lowest": "#0c0e11", "secondary-fixed-dim": "#a4c9ff", "on-secondary-container": "#d6e5ff", "surface-container-high": "#282a2d", surface: "#111316", "on-surface-variant": "#c2c6d6"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {lg: "24px", base: "4px", xs: "4px", "container-margin": "24px", gutter: "16px", sm: "8px", md: "16px", xl: "40px"}, fontFamily: {"headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {"headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-xl": ["40px", {lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", fontWeight: "400"}], "label-sm": ["12px", {lineHeight: "14px", letterSpacing: "0.01em", fontWeight: "500"}], "label-md": ["14px", {lineHeight: "16px", fontWeight: "600"}], "headline-lg-mobile": ["24px", {lineHeight: "32px", fontWeight: "700"}]}}}};</script>
+<style>
+        body {
+            background-color: #111316;
+            color: #e2e2e6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 33, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 49, 57, 0.5);
+        }
+        .glow-primary {
+            box-shadow: 0 0 20px rgba(173, 198, 255, 0.2);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .animate-pulse-slow {
+            animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-24">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-lg py-sm">
+<div class="flex items-center gap-md">
+<button class="active:scale-95 duration-200 p-2 rounded-full hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">SLES</h1>
+</div>
+<div class="flex items-center gap-sm">
+<button class="active:scale-95 duration-200 p-2 rounded-full hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+<div class="w-10 h-10 rounded-full border-2 border-primary/20 p-0.5">
+<img class="w-full h-full rounded-full object-cover" data-alt="A professional close-up portrait of a manufacturing warehouse manager, clean lighting, sharp focus, wearing high-visibility corporate apparel, against a blurred background of a modern industrial facility. The lighting is cold and precise, matching a premium dark mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuzzzvvW78SkZk3EcLSLv7TZddz76NUEMMW7hEaZ8m7lsM-rxAaNz3-1U_Fppe1lPzk9FYD5UHS6gHGw6sX-pLgKFX126lPVgVeifdyBXkSI0BpY7rlhK4cghT13_EWEGH9auD_2dCQkPGTA7OrJ0RpXoQ8yQZ3g3OsKHydfRqQcB6ofkFI2MzCHQsVNfivaZanU8BzAhabT9M0LWmCnX_uXuT-UJ2m6sY_UzxP6IOvVDQqKhGSbq7rOFXoZCiPfEHFUVxPS7QzWcb"/>
+</div>
+</div>
+</header>
+<main class="mt-20 px-md md:px-lg max-w-7xl mx-auto space-y-md">
+<!-- Hero Section: Status & Gauges -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<!-- Main Stock Card -->
+<div class="md:col-span-2 glass-panel rounded-xl p-lg relative overflow-hidden">
+<!-- Background Decoration -->
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-error/10 rounded-full blur-3xl animate-pulse-slow"></div>
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div class="flex justify-between items-start mb-md">
+<div>
+<span class="px-3 py-1 rounded-full bg-error/15 text-error font-label-md text-label-md uppercase tracking-wider mb-sm inline-block">Critical Stock</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Sodium Lauryl Ether Sulfate</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Raw Material • Chemical Surfactant</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-outline uppercase">Unit Cost</p>
+<p class="font-headline-md text-headline-md text-secondary">₱180/kg</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-lg mt-auto">
+<div class="space-y-sm">
+<p class="font-label-sm text-label-sm text-outline">CURRENT INVENTORY</p>
+<div class="flex items-baseline gap-xs">
+<span class="font-headline-xl text-headline-xl text-error">12</span>
+<span class="font-headline-md text-headline-md text-on-surface-variant">kg</span>
+</div>
+<div class="w-full h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-error w-[48%]" style="box-shadow: 0 0 10px rgba(255, 180, 171, 0.4)"></div>
+</div>
+<p class="font-body-sm text-body-sm text-error flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                                13 kg below threshold
+                            </p>
+</div>
+<div class="space-y-sm">
+<p class="font-label-sm text-label-sm text-outline">REORDER POINT</p>
+<div class="flex items-baseline gap-xs">
+<span class="font-headline-xl text-headline-xl text-on-surface">25</span>
+<span class="font-headline-md text-headline-md text-on-surface-variant">kg</span>
+</div>
+<div class="w-full h-2 bg-surface-variant rounded-full">
+<div class="h-full bg-primary/30 w-full"></div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Standard restock quantity: 50 kg</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Location & Info Card -->
+<div class="glass-panel rounded-xl p-lg flex flex-col gap-lg">
+<div class="space-y-md">
+<p class="font-label-sm text-label-sm text-outline uppercase flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">location_on</span> Storage Location
+                    </p>
+<div class="p-md bg-surface-container-low rounded-lg border border-outline-variant/30">
+<p class="font-headline-md text-headline-md text-primary tracking-tight">A1 Rack R2</p>
+<p class="font-body-md text-body-md text-on-surface">Bin Drum 3</p>
+</div>
+</div>
+<div class="mt-auto pt-lg border-t border-outline-variant/20">
+<div class="flex justify-between py-xs">
+<span class="text-on-surface-variant font-body-sm text-body-sm">Last Restock</span>
+<span class="text-on-surface font-label-md text-label-md">Oct 24, 2023</span>
+</div>
+<div class="flex justify-between py-xs">
+<span class="text-on-surface-variant font-body-sm text-body-sm">Lead Time</span>
+<span class="text-on-surface font-label-md text-label-md">3-5 Days</span>
+</div>
+<div class="flex justify-between py-xs">
+<span class="text-on-surface-variant font-body-sm text-body-sm">Vendor</span>
+<span class="text-primary font-label-md text-label-md">ChemPrime Inc.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-md">
+<button class="flex flex-col items-center justify-center gap-sm p-lg bg-secondary-container text-on-secondary-container rounded-xl transition-all hover:scale-[1.02] active:scale-95 shadow-lg group">
+<span class="material-symbols-outlined text-3xl group-hover:rotate-12 transition-transform">add_box</span>
+<span class="font-label-md text-label-md uppercase">Stock In</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-sm p-lg glass-panel text-secondary border border-secondary/30 rounded-xl transition-all hover:scale-[1.02] active:scale-95 group">
+<span class="material-symbols-outlined text-3xl group-hover:-translate-y-1 transition-transform">unarchive</span>
+<span class="font-label-md text-label-md uppercase">Stock Out</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-sm p-lg glass-panel text-on-surface border border-outline-variant/50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 group">
+<span class="material-symbols-outlined text-3xl group-hover:rotate-45 transition-transform">settings_backup_restore</span>
+<span class="font-label-md text-label-md uppercase">Adjust Count</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-sm p-lg glass-panel text-on-surface border border-outline-variant/50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 group">
+<span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">edit</span>
+<span class="font-label-md text-label-md uppercase">Edit Item</span>
+</button>
+</div>
+<!-- Recent History Section -->
+<section class="space-y-md pb-12">
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Inventory Logs</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Last 7 days of activity</p>
+</div>
+<button class="text-primary font-label-md text-label-md hover:underline">View All History</button>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden divide-y divide-outline-variant/20">
+<!-- Log Item 1 -->
+<div class="p-md flex items-center justify-between hover:bg-surface-variant/20 transition-colors">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Stock In: +10.0 kg</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Manual warehouse intake • Batch #2293</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-md text-label-md text-on-surface">Today, 09:42 AM</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">by R. Tan</p>
+</div>
+</div>
+<!-- Log Item 2 -->
+<div class="p-md flex items-center justify-between hover:bg-surface-variant/20 transition-colors">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">refresh</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Inventory Adjustment</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Reason: Spillage during transfer (-0.5 kg)</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-md text-label-md text-on-surface">Yesterday, 04:15 PM</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">by System</p>
+</div>
+</div>
+<!-- Log Item 3 -->
+<div class="p-md flex items-center justify-between hover:bg-surface-variant/20 transition-colors">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">remove</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Stock Out: -2.0 kg</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Requisition for Job #4421 (Soap Batch)</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-md text-label-md text-on-surface">Oct 26, 02:30 PM</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">by M. Gomez</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Predicted Shared Component) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md py-sm pb-safe bg-surface-container/90 backdrop-blur-xl border-t border-outline-variant/30 shadow-lg">
+<a class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+</a>
+<a class="flex items-center justify-center bg-secondary-container text-on-secondary-container rounded-full p-3 shadow-[0_0_15px_rgba(2,103,184,0.4)] active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">analytics</span>
+</a>
+</nav>
+<!-- Modal Placeholder: Adjust Count Reason -->
+<div class="fixed inset-0 z-[100] hidden items-center justify-center p-md bg-black/60 backdrop-blur-sm" id="adjustmentModal">
+<div class="glass-panel w-full max-w-md rounded-2xl p-lg shadow-2xl scale-95 opacity-0 transition-all duration-300 transform" id="modalContainer">
+<div class="flex justify-between items-start mb-lg">
+<h3 class="font-headline-md text-headline-md text-on-surface">Adjust Inventory</h3>
+<button class="p-1 hover:bg-surface-variant rounded-full" onclick="closeModal()"><span class="material-symbols-outlined">close</span></button>
+</div>
+<div class="space-y-md">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">New Quantity (kg)</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl p-md focus:border-primary outline-none text-headline-md" placeholder="12" type="number"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Reason for Adjustment</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl p-md focus:border-primary outline-none">
+<option>Damaged Goods</option>
+<option>Spillage</option>
+<option>Cyclic Count Correction</option>
+<option>Evaporation/Shrinkage</option>
+<option>Other</option>
+</select>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant">Notes</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl p-md focus:border-primary outline-none" placeholder="Explain the adjustment..." rows="3"></textarea>
+</div>
+</div>
+<div class="flex gap-md mt-xl">
+<button class="flex-1 py-md font-label-md text-label-md text-on-surface border border-outline-variant rounded-xl hover:bg-surface-variant/30" onclick="closeModal()">Cancel</button>
+<button class="flex-1 py-md font-label-md text-label-md bg-primary text-on-primary rounded-xl hover:opacity-90 shadow-lg glow-primary">Confirm</button>
+</div>
+</div>
+</div>
+<script>
+        const modal = document.getElementById('adjustmentModal');
+        const modalContainer = document.getElementById('modalContainer');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modalContainer.classList.remove('scale-95', 'opacity-0');
+                modalContainer.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modalContainer.classList.add('scale-95', 'opacity-0');
+            modalContainer.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+        // Attach modal trigger to Adjust Count button
+        document.querySelectorAll('button').forEach(btn => {
+            if (btn.innerText.includes('ADJUST COUNT')) {
+                btn.addEventListener('click', openModal);
+            }
+        });
+    </script>
+</body></html>

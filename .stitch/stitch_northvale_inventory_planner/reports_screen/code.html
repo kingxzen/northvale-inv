@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ProdStock - Reports</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"tertiary-fixed-dim": "#b6c6ef", "on-background": "#e2e2e6", "secondary-container": "#0267b8", "surface-variant": "#333538", "on-primary-fixed-variant": "#004395", "surface-container-low": "#1a1c1f", "outline-variant": "#424754", "on-primary": "#002e6a", "on-tertiary-fixed-variant": "#364768", "inverse-primary": "#005ac2", "tertiary-fixed": "#d8e2ff", "surface-container": "#1e2023", "on-secondary": "#00315d", "surface-dim": "#111316", "on-secondary-container": "#d6e5ff", "secondary-fixed-dim": "#a4c9ff", "on-surface-variant": "#c2c6d6", "primary-fixed": "#d8e2ff", "surface-container-lowest": "#0c0e11", "surface-container-high": "#282a2d", surface: "#111316", "on-surface": "#e2e2e6", "on-error-container": "#ffdad6", "secondary-fixed": "#d4e3ff", "on-secondary-fixed-variant": "#004883", "on-primary-fixed": "#001a42", "on-primary-container": "#00285d", secondary: "#a4c9ff", "error-container": "#93000a", "on-tertiary-container": "#182949", error: "#ffb4ab", "on-tertiary-fixed": "#081b3a", outline: "#8c909f", "tertiary-container": "#8091b6", "on-error": "#690005", "surface-bright": "#37393d", tertiary: "#b6c6ef", "on-secondary-fixed": "#001c39", "inverse-on-surface": "#2f3034", "primary-container": "#4d8eff", "inverse-surface": "#e2e2e6", "surface-container-highest": "#333538", background: "#111316", "primary-fixed-dim": "#adc6ff", "on-tertiary": "#1f3050", "surface-tint": "#adc6ff", primary: "#adc6ff"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {lg: "24px", base: "4px", xs: "4px", "container-margin": "24px", gutter: "16px", sm: "8px", md: "16px", xl: "40px"}, fontFamily: {"headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {"headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-xl": ["40px", {lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", fontWeight: "400"}], "label-sm": ["12px", {lineHeight: "14px", letterSpacing: "0.01em", fontWeight: "500"}], "label-md": ["14px", {lineHeight: "16px", fontWeight: "600"}], "headline-lg-mobile": ["24px", {lineHeight: "32px", fontWeight: "700"}]}}}};</script>
+<style>
+        body {
+            background-color: #111316;
+            color: #e2e2e6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 33, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 49, 57, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #424754;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full bg-surface-dim/80 backdrop-blur-xl z-50 flex justify-between items-center px-lg py-sm w-full border-b border-outline-variant/20 shadow-sm">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A professional high-contrast portrait of a manufacturing operations manager in a dark tech-focused environment. The lighting is dramatic, with subtle cobalt blue rim light against a deep charcoal background, reflecting a high-end corporate industrial aesthetic consistent with a precision aerospace software interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCr284XuWts-elu4tGcfQSXDLxwFkUZglp7uoQcYXpuxbfzHosff2-HEJDDcF8fCASDfOzoHpDkqdKkpoJDLSFLEO7fr1OLX22GC3V_YMCJr3rLU2M91VbI7DVvUlAnJJjGxVAL1cgdyigKQLh5eH5rvGFskmG7PEPYzWsF5Pgixu9aHjZdceJcFLwif9T4Yv6k5ThsaqvazJQRkDzGf5B7P4KdvyMbF6jvyscJpDyaFqDr5gfot9ihV8NjcFuqaicUu03navVueXYT"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">ProdStock</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-2 rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95 duration-200 text-on-surface-variant">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</header>
+<main class="pt-24 px-md md:px-xl max-w-7xl mx-auto space-y-lg">
+<!-- Header & Filter -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Reports</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Operational insights and inventory analytics</p>
+</div>
+<div class="flex items-center bg-surface-container rounded-xl p-1 gap-1 border border-outline-variant/20 self-start">
+<button class="px-md py-2 rounded-lg font-label-md text-label-md bg-secondary-container text-on-secondary-container shadow-sm transition-all">This Week</button>
+<button class="px-md py-2 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-variant transition-all">Month</button>
+</div>
+</div>
+<!-- Summary Bento Grid -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-md">
+<!-- Weekly Estimate -->
+<div class="col-span-2 lg:col-span-1 glass-panel p-md rounded-xl flex flex-col justify-between min-h-[140px]">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-label-md text-label-md">Weekly estimate</span>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">₱18,450</h3>
+<div class="flex items-center gap-xs mt-1">
+<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold">+12.4%</span>
+<span class="text-on-surface-variant text-[10px]">vs last week</span>
+</div>
+</div>
+</div>
+<!-- Raw Materials -->
+<div class="glass-panel p-md rounded-xl flex flex-col justify-between min-h-[140px]">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-label-md text-label-md">Raw</span>
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">category</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">₱10.8k</h3>
+<div class="w-full bg-surface-container-high h-1 rounded-full mt-3 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 58%"></div>
+</div>
+</div>
+</div>
+<!-- Packaging -->
+<div class="glass-panel p-md rounded-xl flex flex-col justify-between min-h-[140px]">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-label-md text-label-md">Pkg</span>
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">package_2</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">₱4.2k</h3>
+<div class="w-full bg-surface-container-high h-1 rounded-full mt-3 overflow-hidden">
+<div class="bg-tertiary h-full rounded-full" style="width: 22%"></div>
+</div>
+</div>
+</div>
+<!-- Labor -->
+<div class="glass-panel p-md rounded-xl flex flex-col justify-between min-h-[140px]">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant font-label-md text-label-md">Labor</span>
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">engineering</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">₱3.45k</h3>
+<div class="w-full bg-surface-container-high h-1 rounded-full mt-3 overflow-hidden">
+<div class="bg-error h-full rounded-full" style="width: 18%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Detailed Reports Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+<!-- Expense Summary & Chart -->
+<div class="lg:col-span-2 glass-panel rounded-xl overflow-hidden">
+<div class="p-md border-b border-outline-variant/20 flex items-center justify-between">
+<h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Expense summary</h3>
+<button class="text-primary font-label-sm text-label-sm hover:underline">View All</button>
+</div>
+<div class="p-lg">
+<div class="flex items-end gap-2 h-40 mb-lg">
+<!-- Simulated Bar Chart -->
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative group overflow-hidden" style="height: 40%">
+<div class="absolute bottom-0 w-full bg-primary/40 group-hover:bg-primary transition-all duration-300" style="height: 100%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Mon</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative group overflow-hidden" style="height: 65%">
+<div class="absolute bottom-0 w-full bg-primary/40 group-hover:bg-primary transition-all duration-300" style="height: 100%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Tue</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative group overflow-hidden" style="height: 90%">
+<div class="absolute bottom-0 w-full bg-primary/40 group-hover:bg-primary transition-all duration-300" style="height: 100%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Wed</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative group overflow-hidden" style="height: 55%">
+<div class="absolute bottom-0 w-full bg-primary/40 group-hover:bg-primary transition-all duration-300" style="height: 100%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Thu</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative group overflow-hidden" style="height: 75%">
+<div class="absolute bottom-0 w-full bg-primary/40 group-hover:bg-primary transition-all duration-300" style="height: 100%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Fri</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative group overflow-hidden" style="height: 30%">
+<div class="absolute bottom-0 w-full bg-primary/40 group-hover:bg-primary transition-all duration-300" style="height: 100%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Sat</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-lg relative group overflow-hidden" style="height: 20%">
+<div class="absolute bottom-0 w-full bg-primary/40 group-hover:bg-primary transition-all duration-300" style="height: 100%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Sun</span>
+</div>
+</div>
+<div class="space-y-sm">
+<div class="flex items-center justify-between py-2 border-b border-outline-variant/10">
+<div class="flex items-center gap-md">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-body-sm text-body-sm text-on-surface">Material Procurement</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface">₱14,250.00</span>
+</div>
+<div class="flex items-center justify-between py-2 border-b border-outline-variant/10">
+<div class="flex items-center gap-md">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="font-body-sm text-body-sm text-on-surface">Logistics &amp; Shipping</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface">₱2,800.00</span>
+</div>
+<div class="flex items-center justify-between py-2">
+<div class="flex items-center gap-md">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="font-body-sm text-body-sm text-on-surface">Operational Overheads</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface">₱1,400.00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Low Stock Report -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col h-full">
+<div class="p-md border-b border-outline-variant/20 flex items-center justify-between bg-error-container/10">
+<h3 class="font-label-md text-label-md text-error flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+                        Low stock report
+                    </h3>
+<span class="text-[10px] bg-error/20 text-error px-1.5 py-0.5 rounded-full font-bold">4 ALERTS</span>
+</div>
+<div class="flex-1 custom-scrollbar overflow-y-auto p-md space-y-md">
+<div class="flex items-center gap-md p-sm rounded-lg bg-surface-container-low border border-outline-variant/10">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-on-surface">Aluminum Sheeting</p>
+<p class="text-[11px] text-error">Remaining: 12 units</p>
+</div>
+<button class="p-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+</button>
+</div>
+<div class="flex items-center gap-md p-sm rounded-lg bg-surface-container-low border border-outline-variant/10">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-on-surface">Polyester Resin</p>
+<p class="text-[11px] text-error">Remaining: 5 gal</p>
+</div>
+<button class="p-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+</button>
+</div>
+<div class="flex items-center gap-md p-sm rounded-lg bg-surface-container-low border border-outline-variant/10">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-on-surface">M8 Steel Bolts</p>
+<p class="text-[11px] text-error">Remaining: 420 pcs</p>
+</div>
+<button class="p-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+</button>
+</div>
+<div class="flex items-center gap-md p-sm rounded-lg bg-surface-container-low border border-outline-variant/10">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-on-surface">Clear Coat Spray</p>
+<p class="text-[11px] text-error">Remaining: 8 cans</p>
+</div>
+<button class="p-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+</button>
+</div>
+</div>
+<div class="p-md bg-surface-container-low">
+<button class="w-full py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg active:scale-[0.98] transition-transform">
+                        Generate Reorder Form
+                    </button>
+</div>
+</div>
+</div>
+<!-- Production & Movement Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+<!-- Material Usage -->
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="p-md border-b border-outline-variant/20 flex items-center justify-between">
+<h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Material usage</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container/50 border-b border-outline-variant/20">
+<th class="px-md py-3 font-label-sm text-label-sm text-on-surface-variant">Material</th>
+<th class="px-md py-3 font-label-sm text-label-sm text-on-surface-variant">Used</th>
+<th class="px-md py-3 font-label-sm text-label-sm text-on-surface-variant">Waste %</th>
+<th class="px-md py-3 font-label-sm text-label-sm text-on-surface-variant">Efficiency</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr>
+<td class="px-md py-3 font-body-sm text-body-sm">Glass Fiber</td>
+<td class="px-md py-3 font-body-sm text-body-sm">120kg</td>
+<td class="px-md py-3 font-body-sm text-body-sm text-error">4.2%</td>
+<td class="px-md py-3">
+<div class="flex items-center gap-2">
+<div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 95%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">95%</span>
+</div>
+</td>
+</tr>
+<tr>
+<td class="px-md py-3 font-body-sm text-body-sm">Cure Agent</td>
+<td class="px-md py-3 font-body-sm text-body-sm">15L</td>
+<td class="px-md py-3 font-body-sm text-body-sm text-emerald-400">0.8%</td>
+<td class="px-md py-3">
+<div class="flex items-center gap-2">
+<div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 99%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">99%</span>
+</div>
+</td>
+</tr>
+<tr>
+<td class="px-md py-3 font-body-sm text-body-sm">Steel Frame</td>
+<td class="px-md py-3 font-body-sm text-body-sm">45 units</td>
+<td class="px-md py-3 font-body-sm text-body-sm text-emerald-400">1.5%</td>
+<td class="px-md py-3">
+<div class="flex items-center gap-2">
+<div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 98%"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">98%</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Stock Movement -->
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="p-md border-b border-outline-variant/20 flex items-center justify-between">
+<h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Stock movement</h3>
+</div>
+<div class="p-md space-y-md">
+<!-- Compact Activity Rows -->
+<div class="flex items-start gap-md">
+<div class="mt-1 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-emerald-400">add</span>
+</div>
+<div>
+<p class="font-body-sm text-body-sm text-on-surface">Restocked: <span class="font-bold">200x</span> Heavy Duty Hinges</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Today, 09:12 AM • Warehouse B</p>
+</div>
+</div>
+<div class="flex items-start gap-md">
+<div class="mt-1 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-primary">sync</span>
+</div>
+<div>
+<p class="font-body-sm text-body-sm text-on-surface">Transferred: <span class="font-bold">40L</span> Solvent to Prod Line 3</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Today, 08:45 AM • Internal</p>
+</div>
+</div>
+<div class="flex items-start gap-md">
+<div class="mt-1 w-6 h-6 rounded-full bg-error/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-error">remove</span>
+</div>
+<div>
+<p class="font-body-sm text-body-sm text-on-surface">Outbound: <span class="font-bold">12x</span> Chassis Units</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Yesterday, 04:30 PM • Client 829</p>
+</div>
+</div>
+<div class="flex items-start gap-md">
+<div class="mt-1 w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-emerald-400">add</span>
+</div>
+<div>
+<p class="font-body-sm text-body-sm text-on-surface">Restocked: <span class="font-bold">500kg</span> Raw Carbon Thread</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Yesterday, 02:15 PM • Supplier Alpha</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Production History -->
+<div class="glass-panel rounded-xl overflow-hidden mb-8">
+<div class="p-md border-b border-outline-variant/20 flex items-center justify-between bg-surface-container/30">
+<h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Production history</h3>
+<div class="flex gap-2">
+<button class="p-1 hover:bg-surface-variant rounded transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">filter_list</span>
+</button>
+<button class="p-1 hover:bg-surface-variant rounded transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/10 text-on-surface-variant">
+<th class="px-md py-4 font-label-sm text-label-sm">Batch ID</th>
+<th class="px-md py-4 font-label-sm text-label-sm">Product Line</th>
+<th class="px-md py-4 font-label-sm text-label-sm">Qty</th>
+<th class="px-md py-4 font-label-sm text-label-sm">Status</th>
+<th class="px-md py-4 font-label-sm text-label-sm">Completion</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-variant/20 transition-colors cursor-pointer">
+<td class="px-md py-4 font-body-sm text-body-sm text-primary font-mono">#PRD-2023-901</td>
+<td class="px-md py-4 font-body-sm text-body-sm">Steering Component A2</td>
+<td class="px-md py-4 font-body-sm text-body-sm">450</td>
+<td class="px-md py-4">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">COMPLETED</span>
+</td>
+<td class="px-md py-4 font-body-sm text-body-sm">Oct 24, 2023</td>
+</tr>
+<tr class="hover:bg-surface-variant/20 transition-colors cursor-pointer">
+<td class="px-md py-4 font-body-sm text-body-sm text-primary font-mono">#PRD-2023-904</td>
+<td class="px-md py-4 font-body-sm text-body-sm">Control Panel Housing</td>
+<td class="px-md py-4 font-body-sm text-body-sm">120</td>
+<td class="px-md py-4">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container/30 text-secondary-fixed">IN PROGRESS</span>
+</td>
+<td class="px-md py-4 font-body-sm text-body-sm">Expected Today</td>
+</tr>
+<tr class="hover:bg-surface-variant/20 transition-colors cursor-pointer">
+<td class="px-md py-4 font-body-sm text-body-sm text-primary font-mono">#PRD-2023-889</td>
+<td class="px-md py-4 font-body-sm text-body-sm">Sensor Bracket v4</td>
+<td class="px-md py-4 font-body-sm text-body-sm">1,200</td>
+<td class="px-md py-4">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">COMPLETED</span>
+</td>
+<td class="px-md py-4 font-body-sm text-body-sm">Oct 22, 2023</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md py-sm pb-safe bg-surface-container/90 backdrop-blur-xl border-t border-outline-variant/30 shadow-lg rounded-t-xl">
+<div class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">dashboard</span>
+</div>
+<div class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</div>
+<div class="flex items-center justify-center bg-secondary-container text-on-secondary-container rounded-full p-3 shadow-[0_0_15px_rgba(2,103,184,0.4)] active:scale-90 duration-150">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+</nav>
+<!-- Desktop Sidebar Simulation (Optional helper for UX) -->
+<div class="hidden md:flex fixed left-0 top-0 h-full w-20 flex-col items-center py-xl gap-lg bg-surface-container-low border-r border-outline-variant/10 z-[60]">
+<div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-xl">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</div>
+<div class="p-3 text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+</div>
+<div class="p-3 text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div class="p-3 bg-secondary-container text-on-secondary-container rounded-xl shadow-lg cursor-pointer">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div class="mt-auto p-3 text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+</div>
+</div>
+<script>
+        // Micro-interactions for chart bars
+        document.querySelectorAll('.group').forEach(bar => {
+            bar.addEventListener('mouseenter', () => {
+                bar.querySelector('.absolute').style.filter = 'drop-shadow(0 0 8px rgba(173, 198, 255, 0.6))';
+            });
+            bar.addEventListener('mouseleave', () => {
+                bar.querySelector('.absolute').style.filter = 'none';
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BOM Editor - ProdStock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #111316;
+            color: #e2e2e6;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(30, 33, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 49, 57, 0.8);
+        }
+
+        .inner-glow-active {
+            box-shadow: inset 0 0 10px rgba(2, 103, 184, 0.3);
+        }
+
+        .primary-glow:hover {
+            box-shadow: 0 0 20px rgba(77, 142, 255, 0.4);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111316;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #333538;
+            border-radius: 10px;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"tertiary-fixed-dim": "#b6c6ef", "on-background": "#e2e2e6", "secondary-container": "#0267b8", "surface-variant": "#333538", "on-primary-fixed-variant": "#004395", "surface-container-low": "#1a1c1f", "outline-variant": "#424754", "on-primary": "#002e6a", "on-tertiary-fixed-variant": "#364768", "inverse-primary": "#005ac2", "tertiary-fixed": "#d8e2ff", "surface-container": "#1e2023", "on-secondary": "#00315d", "surface-dim": "#111316", "on-surface": "#e2e2e6", "on-error-container": "#ffdad6", "secondary-fixed": "#d4e3ff", "on-secondary-fixed-variant": "#004883", "on-primary-fixed": "#001a42", "on-primary-container": "#00285d", secondary: "#a4c9ff", "error-container": "#93000a", "on-tertiary-container": "#182949", error: "#ffb4ab", "on-tertiary-fixed": "#081b3a", outline: "#8c909f", "tertiary-container": "#8091b6", "on-error": "#690005", "surface-bright": "#37393d", tertiary: "#b6c6ef", "on-secondary-fixed": "#001c39", "inverse-on-surface": "#2f3034", "primary-container": "#4d8eff", "inverse-surface": "#e2e2e6", "surface-container-highest": "#333538", background: "#111316", "primary-fixed-dim": "#adc6ff", "on-tertiary": "#1f3050", "surface-tint": "#adc6ff", primary: "#adc6ff", "primary-fixed": "#d8e2ff", "surface-container-lowest": "#0c0e11", "secondary-fixed-dim": "#a4c9ff", "on-secondary-container": "#d6e5ff", "surface-container-high": "#282a2d", surface: "#111316", "on-surface-variant": "#c2c6d6"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {lg: "24px", base: "4px", xs: "4px", "container-margin": "24px", gutter: "16px", sm: "8px", md: "16px", xl: "40px"}, fontFamily: {"headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {}}}};</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24">
+<!-- Top AppBar (JSON Component Implementation) -->
+<header class="fixed top-0 w-full bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm z-50 flex justify-between items-center px-lg py-sm">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A clean, professional headshot of a warehouse floor manager, wearing a smart industrial vest, captured in high-definition with soft, directional lighting against a blurred background of a modern, clean manufacturing facility. The overall tone is professional, trustworthy, and technologically advanced, fitting the premium aerospace industrial aesthetic of the app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_2mpPpW8r_KRQMbaUXZ3yW-0Ig-alScFgzWHbwwx4MI7REq6GgLGx570LeHW_Ao0pxvMRYn4LdeRYDN6n4XpbpizXquMlioE01T47IQQioVQe48Cm5qDk5FdHIvOakiS-v4Gq0v3KAHB_LAoR7XGfSQbXpFiqGAoLTRk-mxznnedolOWSogrOjhafMyCEJiIkuEVX3naycZo1LvRU0SzVfUjUJN9jbTjqkgn8f1Sx4TR1IniyAGMG3K0_a5SUfbcSyZEMikiGr-19"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">ProdStock</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-2 rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+<span class="font-label-md text-label-md text-on-surface-variant hidden md:block">BOM Editor</span>
+</div>
+</header>
+<main class="pt-20 px-container-margin max-w-7xl mx-auto space-y-lg">
+<!-- Header Info Section -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="md:col-span-2 glass-panel p-lg rounded-xl flex flex-col justify-between relative overflow-hidden">
+<div>
+<span class="text-secondary font-label-md uppercase tracking-wider">Active Configuration</span>
+<h2 class="font-headline-lg text-headline-lg mt-sm">Keeva Airzen Lavender</h2>
+<p class="text-on-surface-variant font-body-md mt-xs">Drafting Master Bill of Materials</p>
+</div>
+<div class="mt-xl flex gap-md">
+<div class="bg-surface-container-low px-md py-sm rounded-lg border border-outline-variant/20">
+<span class="block text-on-surface-variant font-label-sm">Batch Size</span>
+<span class="font-headline-md text-headline-md text-primary">3000ml</span>
+</div>
+<div class="bg-surface-container-low px-md py-sm rounded-lg border border-outline-variant/20">
+<span class="block text-on-surface-variant font-label-sm">Version</span>
+<span class="font-headline-md text-headline-md text-on-surface">V2.4</span>
+</div>
+</div>
+</div>
+<div class="glass-panel p-lg rounded-xl flex flex-col items-center justify-center text-center">
+<div class="w-16 h-16 rounded-full bg-secondary-container flex items-center justify-center mb-md shadow-[0_0_20px_rgba(2,103,184,0.3)]">
+<span class="material-symbols-outlined text-on-secondary-container text-4xl">inventory_2</span>
+</div>
+<h3 class="font-headline-md text-headline-md">BOM Validation</h3>
+<p class="text-on-surface-variant font-body-sm mt-sm">Ensure all component stock levels are checked before production commit.</p>
+<button class="mt-md w-full bg-primary text-on-primary font-label-md py-3 rounded-lg font-bold primary-glow transition-all active:scale-95">Check Availability</button>
+</div>
+</section>
+<!-- BOM Sections (Bento-ish Layout) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+<!-- Ingredients Section -->
+<section class="lg:col-span-8 space-y-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary">science</span>
+<h3 class="font-headline-md text-headline-md">Ingredients</h3>
+</div>
+<button class="flex items-center gap-xs text-primary font-label-md hover:underline">
+<span class="material-symbols-outlined text-sm">add</span> Add ingredient
+                    </button>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden border border-outline-variant/30">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high border-b border-outline-variant/50">
+<th class="px-md py-sm font-label-md text-on-surface-variant">Item Name</th>
+<th class="px-md py-sm font-label-md text-on-surface-variant">Quantity</th>
+<th class="px-md py-sm font-label-md text-on-surface-variant">Unit</th>
+<th class="px-md py-sm font-label-md text-on-surface-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20">
+<tr class="hover:bg-surface-variant/20 transition-colors">
+<td class="px-md py-sm font-body-md">Water (Distilled)</td>
+<td class="px-md py-sm font-body-md">2400</td>
+<td class="px-md py-sm font-label-sm text-secondary">ml</td>
+<td class="px-md py-sm text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/20 transition-colors">
+<td class="px-md py-sm font-body-md">Ethanol (99%)</td>
+<td class="px-md py-sm font-body-md">450</td>
+<td class="px-md py-sm font-label-sm text-secondary">ml</td>
+<td class="px-md py-sm text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/20 transition-colors">
+<td class="px-md py-sm font-body-md">Lavender Essential Oil</td>
+<td class="px-md py-sm font-body-md">150</td>
+<td class="px-md py-sm font-label-sm text-secondary">ml</td>
+<td class="px-md py-sm text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Packaging Section -->
+<div class="pt-lg">
+<div class="flex items-center justify-between mb-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary">inventory</span>
+<h3 class="font-headline-md text-headline-md">Packaging</h3>
+</div>
+<button class="flex items-center gap-xs text-primary font-label-md hover:underline">
+<span class="material-symbols-outlined text-sm">add</span> Add packaging
+                        </button>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden border border-outline-variant/30">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high border-b border-outline-variant/50">
+<th class="px-md py-sm font-label-md text-on-surface-variant">Component</th>
+<th class="px-md py-sm font-label-md text-on-surface-variant">Qty</th>
+<th class="px-md py-sm font-label-md text-on-surface-variant">Unit</th>
+<th class="px-md py-sm font-label-md text-on-surface-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20">
+<tr class="hover:bg-surface-variant/20 transition-colors">
+<td class="px-md py-sm font-body-md">Glass Bottle (300ml)</td>
+<td class="px-md py-sm font-body-md">10</td>
+<td class="px-md py-sm font-label-sm text-secondary">pcs</td>
+<td class="px-md py-sm text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/20 transition-colors">
+<td class="px-md py-sm font-body-md">Fine Mist Cap - Black</td>
+<td class="px-md py-sm font-body-md">10</td>
+<td class="px-md py-sm font-label-sm text-secondary">pcs</td>
+<td class="px-md py-sm text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/20 transition-colors">
+<td class="px-md py-sm font-body-md">Premium Lavender Label</td>
+<td class="px-md py-sm font-body-md">10</td>
+<td class="px-md py-sm font-label-sm text-secondary">pcs</td>
+<td class="px-md py-sm text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Manpower & Actions Sidebar -->
+<aside class="lg:col-span-4 space-y-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary">groups</span>
+<h3 class="font-headline-md text-headline-md">Manpower</h3>
+</div>
+<button class="flex items-center gap-xs text-primary font-label-md hover:underline">
+<span class="material-symbols-outlined text-sm">add</span> Add cost
+                    </button>
+</div>
+<div class="glass-panel p-md rounded-xl space-y-sm border border-outline-variant/30">
+<div class="p-sm bg-surface-container-low rounded-lg border border-outline-variant/20 flex justify-between items-center group">
+<div>
+<span class="block font-label-md">Mixing &amp; Filling</span>
+<span class="text-on-surface-variant font-body-sm">Lead Technician (2 hrs)</span>
+</div>
+<div class="flex items-center gap-sm">
+<span class="font-label-md text-secondary">$85.00</span>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-on-surface-variant hover:text-error"><span class="material-symbols-outlined text-sm">delete</span></button>
+</div>
+</div>
+<div class="p-sm bg-surface-container-low rounded-lg border border-outline-variant/20 flex justify-between items-center group">
+<div>
+<span class="block font-label-md">Labelling &amp; QC</span>
+<span class="text-on-surface-variant font-body-sm">Line Operator (1.5 hrs)</span>
+</div>
+<div class="flex items-center gap-sm">
+<span class="font-label-md text-secondary">$45.00</span>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-on-surface-variant hover:text-error"><span class="material-symbols-outlined text-sm">delete</span></button>
+</div>
+</div>
+</div>
+<div class="bg-primary-container/20 border border-primary-container/50 rounded-xl p-lg space-y-md">
+<h4 class="font-headline-md text-headline-md text-on-primary-container">Summary</h4>
+<div class="space-y-sm">
+<div class="flex justify-between font-body-md">
+<span class="text-on-surface-variant">Ingredients Total:</span>
+<span>$142.50</span>
+</div>
+<div class="flex justify-between font-body-md">
+<span class="text-on-surface-variant">Packaging Total:</span>
+<span>$38.00</span>
+</div>
+<div class="flex justify-between font-body-md">
+<span class="text-on-surface-variant">Manpower Total:</span>
+<span>$130.00</span>
+</div>
+<div class="border-t border-outline-variant/30 my-md pt-md flex justify-between font-bold text-headline-md">
+<span>BOM Total:</span>
+<span class="text-primary">$310.50</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-label-md py-4 rounded-xl font-extrabold uppercase tracking-widest primary-glow transition-all active:scale-95 shadow-xl">
+                        Save BOM
+                    </button>
+<button class="w-full border border-secondary text-secondary font-label-md py-4 rounded-xl font-bold transition-all hover:bg-secondary/10 active:scale-95">
+                        Cancel Changes
+                    </button>
+</div>
+</aside>
+</div>
+</main>
+<!-- Bottom NavBar (JSON Component Implementation) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md py-sm pb-safe bg-surface-container/90 backdrop-blur-xl border-t border-outline-variant/30 shadow-lg rounded-t-xl">
+<button class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+</button>
+<button class="flex items-center justify-center bg-secondary-container text-on-secondary-container rounded-full p-3 shadow-[0_0_15px_rgba(2,103,184,0.4)] active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="precision_manufacturing">precision_manufacturing</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</button>
+</nav>
+<script>
+        // Micro-interactions for table rows
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', () => {
+                row.classList.toggle('bg-surface-variant/30');
+            });
+        });
+
+        // Simple feedback on save button
+        const saveBtn = document.querySelector('button.bg-primary.py-4');
+        saveBtn.addEventListener('click', () => {
+            const originalText = saveBtn.innerText;
+            saveBtn.innerText = 'SAVING...';
+            saveBtn.classList.add('opacity-70');
+            setTimeout(() => {
+                saveBtn.innerText = 'SUCCESS';
+                saveBtn.classList.remove('opacity-70');
+                saveBtn.classList.add('bg-emerald-600');
+                setTimeout(() => {
+                    saveBtn.innerText = originalText;
+                    saveBtn.classList.remove('bg-emerald-600');
+                }, 2000);
+            }, 1500);
+        });
+    </script>
+</body></html>

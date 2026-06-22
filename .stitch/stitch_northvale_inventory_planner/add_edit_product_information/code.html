@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add Product | ProdStock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #111316;
+            color: #e2e2e6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-panel {
+            background: rgba(30, 33, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 49, 57, 0.5);
+        }
+        .input-focus-ring:focus {
+            outline: none;
+            border-color: #adc6ff;
+            box-shadow: 0 0 0 2px rgba(173, 198, 255, 0.2);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 15px rgba(2, 103, 184, 0.4);
+        }
+    </style>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"tertiary-fixed-dim": "#b6c6ef", "on-background": "#e2e2e6", "secondary-container": "#0267b8", "surface-variant": "#333538", "on-primary-fixed-variant": "#004395", "surface-container-low": "#1a1c1f", "outline-variant": "#424754", "on-primary": "#002e6a", "on-tertiary-fixed-variant": "#364768", "inverse-primary": "#005ac2", "tertiary-fixed": "#d8e2ff", "surface-container": "#1e2023", "on-secondary": "#00315d", "surface-dim": "#111316", "on-surface": "#e2e2e6", "on-error-container": "#ffdad6", "secondary-fixed": "#d4e3ff", "on-secondary-fixed-variant": "#004883", "on-primary-fixed": "#001a42", "on-primary-container": "#00285d", secondary: "#a4c9ff", "error-container": "#93000a", "on-tertiary-container": "#182949", error: "#ffb4ab", "on-tertiary-fixed": "#081b3a", outline: "#8c909f", "tertiary-container": "#8091b6", "on-error": "#690005", "surface-bright": "#37393d", tertiary: "#b6c6ef", "on-secondary-fixed": "#001c39", "inverse-on-surface": "#2f3034", "primary-container": "#4d8eff", "inverse-surface": "#e2e2e6", "surface-container-highest": "#333538", background: "#111316", "primary-fixed-dim": "#adc6ff", "on-tertiary": "#1f3050", "surface-tint": "#adc6ff", primary: "#adc6ff", "primary-fixed": "#d8e2ff", "surface-container-lowest": "#0c0e11", "secondary-fixed-dim": "#a4c9ff", "on-secondary-container": "#d6e5ff", "surface-container-high": "#282a2d", surface: "#111316", "on-surface-variant": "#c2c6d6"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {lg: "24px", base: "4px", xs: "4px", "container-margin": "24px", gutter: "16px", sm: "8px", md: "16px", xl: "40px"}, fontFamily: {"headline-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {"headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-xl": ["40px", {lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "body-sm": ["14px", {lineHeight: "20px", fontWeight: "400"}], "label-sm": ["12px", {lineHeight: "14px", letterSpacing: "0.01em", fontWeight: "500"}], "label-md": ["14px", {lineHeight: "16px", fontWeight: "600"}], "headline-lg-mobile": ["24px", {lineHeight: "32px", fontWeight: "700"}]}}}};</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-dim pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-lg py-sm">
+<div class="flex items-center gap-md">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Add product</h1>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-primary/20 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional high-contrast headshot of a female production manager in her late 30s, wearing clean industrial workwear. She is set against a blurred background of a modern, high-tech manufacturing facility with soft blue and charcoal tones. The lighting is cinematic and sharp, emphasizing a sense of competence and leadership in a precision aerospace-style environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYemn7E0Y2gPfZCSUsthew6IH2fWnFMADbeUylx48j48MiH_0d7YjbOLW35DZgMlPlyzuH1V60Aix3ChGb0-kuYizk6knEtrexyUQ1O40oSblmCEIMOt6GKZItno5PZ3WtRZeVIq3xyPNNX1rfAJ7KfkkRBDyV9TPYAoJMwbSgjJr50UNlKZDIk77hq0alYDx6sR4_kNYqGaJLTwzCvwTBoHR-WfuLUktm1muUBdpu_K0ui62N8nmRPzoEMVPI1hb1mlf2edtCUg48"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="mt-24 px-md max-w-2xl mx-auto space-y-lg">
+<!-- Progress Indicator -->
+<div class="flex items-center justify-between mb-xl">
+<div class="flex flex-col items-center flex-1">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold mb-1 shadow-[0_0_15px_rgba(2,103,184,0.3)]">1</div>
+<span class="font-label-sm text-label-sm text-on-surface">Product info</span>
+</div>
+<div class="h-[2px] flex-1 bg-surface-variant/50 mx-4 mt-[-18px]"></div>
+<div class="flex flex-col items-center flex-1 opacity-40">
+<div class="w-10 h-10 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold mb-1">2</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">BOM Entry</span>
+</div>
+<div class="h-[2px] flex-1 bg-surface-variant/50 mx-4 mt-[-18px]"></div>
+<div class="flex flex-col items-center flex-1 opacity-40">
+<div class="w-10 h-10 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold mb-1">3</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Review</span>
+</div>
+</div>
+<!-- Form Card -->
+<div class="glass-panel rounded-xl p-lg space-y-md">
+<!-- Brand & Product Code Row -->
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Brand</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-md py-3 text-on-surface font-body-md input-focus-ring transition-all" placeholder="Enter brand" type="text" value="Keeva"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Product code</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-md py-3 text-on-surface font-body-md input-focus-ring transition-all" placeholder="e.g. KV-001" type="text" value="KV-AIR-01"/>
+</div>
+</div>
+<!-- Name -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Name</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-md py-3 text-on-surface font-body-md input-focus-ring transition-all" placeholder="Product name" type="text" value="Airzen"/>
+</div>
+<!-- Scent & Family Row -->
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Scent</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-md py-3 text-on-surface font-body-md input-focus-ring transition-all" placeholder="e.g. Lavender" type="text" value="Lavender"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Family</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-md py-3 text-on-surface font-body-md input-focus-ring transition-all appearance-none">
+<option selected="">Floral</option>
+<option>Woody</option>
+<option>Citrus</option>
+<option>Fresh</option>
+</select>
+</div>
+</div>
+<!-- Category -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Category</label>
+<div class="flex flex-wrap gap-sm pt-1">
+<button class="bg-secondary-container/20 text-on-secondary-container border border-secondary-container/50 px-md py-1 rounded-full font-label-md transition-all active:scale-95">Air Care</button>
+<button class="bg-surface-variant/30 text-on-surface-variant border border-outline-variant/30 px-md py-1 rounded-full font-label-md hover:bg-surface-variant/50 transition-all active:scale-95">Personal Care</button>
+<button class="bg-surface-variant/30 text-on-surface-variant border border-outline-variant/30 px-md py-1 rounded-full font-label-md hover:bg-surface-variant/50 transition-all active:scale-95">Home Fragrance</button>
+</div>
+</div>
+<!-- Sizing Controls -->
+<div class="grid grid-cols-2 gap-md pt-2">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Default batch size</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-md py-3 text-on-surface font-body-md input-focus-ring transition-all" type="number" value="500"/>
+<span class="absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant font-label-md">Kg</span>
+</div>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Output unit</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-md py-3 text-on-surface font-body-md input-focus-ring transition-all">
+<option selected="">Bottles (250ml)</option>
+<option>Bottles (500ml)</option>
+<option>Tins (100g)</option>
+<option>Bulk (Litre)</option>
+</select>
+</div>
+</div>
+<!-- Notes -->
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Notes</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-md py-3 text-on-surface font-body-md input-focus-ring transition-all resize-none" placeholder="Production notes, storage requirements, or specific instructions..." rows="3"></textarea>
+</div>
+</div>
+<!-- Sticky Footer CTA -->
+<div class="fixed bottom-0 left-0 w-full p-lg bg-surface-dim/95 backdrop-blur-md border-t border-outline-variant/10 z-50">
+<div class="max-w-2xl mx-auto flex items-center gap-md">
+<button class="flex-1 font-headline-md text-headline-md py-4 rounded-xl bg-secondary-container text-on-secondary-container font-bold btn-glow transition-all active:scale-[0.98] flex items-center justify-center gap-sm">
+                    Continue to BOM
+                    <span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Extra atmospheric details -->
+<div class="opacity-50 pb-8 text-center">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Draft saved automatically 2 minutes ago</p>
+</div>
+</main>
+<!-- BottomNavBar (Suppressed as per rules for Transactional screen) -->
+<script>
+        // Subtle micro-interaction for inputs
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('focus', () => {
+                el.parentElement.querySelector('label').classList.replace('text-on-surface-variant', 'text-primary');
+            });
+            el.addEventListener('blur', () => {
+                el.parentElement.querySelector('label').classList.replace('text-primary', 'text-on-surface-variant');
+            });
+        });
+
+        // Click interaction for chips
+        document.querySelectorAll('.flex.flex-wrap button').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.flex.flex-wrap button').forEach(c => {
+                    c.className = "bg-surface-variant/30 text-on-surface-variant border border-outline-variant/30 px-md py-1 rounded-full font-label-md hover:bg-surface-variant/50 transition-all active:scale-95";
+                });
+                chip.className = "bg-secondary-container/20 text-on-secondary-container border border-secondary-container/50 px-md py-1 rounded-full font-label-md transition-all active:scale-95";
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>ProdStock | Industrial Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 33, 38, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 49, 57, 0.5);
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #1A2B4B 0%, #121417 100%);
+            border: 1px solid rgba(173, 198, 255, 0.1);
+        }
+        body {
+            background-color: #111316;
+            color: #e2e2e6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Custom scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111316;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333538;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"secondary-container": "#0267b8", "tertiary-fixed-dim": "#b6c6ef", "on-background": "#e2e2e6", "surface-container-low": "#1a1c1f", "surface-variant": "#333538", "on-primary-fixed-variant": "#004395", "on-tertiary-fixed-variant": "#364768", "inverse-primary": "#005ac2", "on-primary": "#002e6a", "outline-variant": "#424754", "on-surface-variant": "#c2c6d6", "secondary-fixed-dim": "#a4c9ff", "surface-dim": "#111316", "on-secondary-container": "#d6e5ff", "on-secondary": "#00315d", "tertiary-fixed": "#d8e2ff", "surface-container": "#1e2023", "surface-container-lowest": "#0c0e11", "surface-container-high": "#282a2d", "primary-fixed": "#d8e2ff", "on-error-container": "#ffdad6", "on-surface": "#e2e2e6", surface: "#111316", "on-secondary-fixed-variant": "#004883", "secondary-fixed": "#d4e3ff", secondary: "#a4c9ff", "on-primary-container": "#00285d", "on-primary-fixed": "#001a42", "on-tertiary-container": "#182949", error: "#ffb4ab", "error-container": "#93000a", outline: "#8c909f", "on-tertiary-fixed": "#081b3a", "tertiary-container": "#8091b6", "on-error": "#690005", "inverse-on-surface": "#2f3034", tertiary: "#b6c6ef", "on-secondary-fixed": "#001c39", "surface-bright": "#37393d", "inverse-surface": "#e2e2e6", "primary-container": "#4d8eff", "primary-fixed-dim": "#adc6ff", background: "#111316", "surface-container-highest": "#333538", primary: "#adc6ff", "surface-tint": "#adc6ff", "on-tertiary": "#1f3050"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {lg: "24px", base: "4px", xs: "4px", "container-margin": "24px", sm: "8px", gutter: "16px", xl: "40px", md: "16px"}, fontFamily: {"headline-lg-mobile": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], headline: ["Plus Jakarta Sans"], display: ["Plus Jakarta Sans"], body: ["Plus Jakarta Sans"], label: ["Plus Jakarta Sans"]}, fontSize: {"headline-lg-mobile": ["24px", {lineHeight: "32px", fontWeight: "700"}], "label-sm": ["12px", {lineHeight: "14px", letterSpacing: "0.01em", fontWeight: "500"}], "label-md": ["14px", {lineHeight: "16px", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "headline-xl": ["40px", {lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-sm": ["14px", {lineHeight: "20px", fontWeight: "400"}], "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}]}}}};</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center px-lg py-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-outline-variant/30 active:scale-95 duration-200 cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="A professional warehouse floor manager profile photo, close-up shot, wearing modern minimalist industrial attire, soft lighting with hints of electric blue in a high-tech manufacturing facility background. Dark-mode aesthetic with clean skin textures and sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPyfWFpcuQwiNqJosiATb175SdDGaBitGjKBH4y97w-zDLGfbex3WE_8ZlN45VXRuO2IYDQEhxq9wZEBOHJwCP6Kdi56FrDMbb28L3izJ_INSkcz2taJfoJJXdGbN80p6-wOr5rWRJGXoMso8AofEWcRwlBKy1s6Le8zmlWNwhUvKaNKnIoiKAXOpDM6W2mEMGGOeJDp6yAbT5adsoGIK6Y9oaaQkffQWXLeGAn0-cCKZVRkK6NQsSfrdS4Hl3ifS2SfbWFaM9O_jW"/>
+</div>
+<div class="hidden sm:block">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Good morning</p>
+<h1 class="font-headline-md text-headline-md font-bold text-primary leading-tight">ProdStock</h1>
+</div>
+<div class="sm:hidden">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">ProdStock</h1>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95 relative">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="ml-2 px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center gap-2 cursor-pointer active:scale-95 duration-150">
+<span class="font-label-sm text-label-sm text-on-surface">This Week</span>
+<span class="material-symbols-outlined text-sm text-on-surface-variant">expand_more</span>
+</div>
+</div>
+</header>
+<main class="mt-20 px-md md:px-lg max-w-5xl mx-auto space-y-gutter">
+<!-- Hero Card -->
+<section class="hero-gradient rounded-xl p-lg relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-48 h-48 bg-primary/10 blur-[80px] -mr-20 -mt-20 pointer-events-none"></div>
+<div class="relative z-10 flex justify-between items-start">
+<div class="space-y-1">
+<h2 class="font-body-md text-body-md text-primary/80">Need actions today</h2>
+<div class="flex items-baseline gap-2">
+<span class="text-6xl font-extrabold text-white tracking-tighter">11</span>
+<span class="material-symbols-outlined text-error text-3xl">priority_high</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-[200px]">Items need attention before production</p>
+</div>
+<div class="bg-surface-container-highest/40 backdrop-blur-md p-lg rounded-xl grid grid-cols-1 gap-4 min-w-[140px] border border-outline-variant/20">
+<div class="flex items-center justify-between gap-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Order</span>
+<span class="font-headline-md text-headline-md text-primary">8</span>
+</div>
+<div class="flex items-center justify-between gap-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Blocked</span>
+<span class="font-headline-md text-headline-md text-error">1</span>
+</div>
+<div class="flex items-center justify-between gap-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Low stock</span>
+<span class="font-headline-md text-headline-md text-tertiary">3</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Action Row -->
+<section class="grid grid-cols-2 gap-md">
+<!-- Card 1 -->
+<div class="bg-surface-container rounded-xl p-md border border-outline-variant/30 hover:border-primary/50 transition-all cursor-pointer active:scale-95 group">
+<div class="flex items-center justify-between mb-sm">
+<div class="p-2 rounded-lg bg-primary-container/20">
+<span class="material-symbols-outlined text-primary">shopping_cart</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">arrow_forward_ios</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant">Need to order</h3>
+<p class="font-headline-md text-headline-md text-on-surface font-bold">8 items</p>
+<p class="font-label-sm text-label-sm text-error/80 mt-1">Critical shortages</p>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container rounded-xl p-md border border-outline-variant/30 hover:border-error/50 transition-all cursor-pointer active:scale-95">
+<div class="flex items-center justify-between mb-sm">
+<div class="p-2 rounded-lg bg-error-container/20">
+<span class="material-symbols-outlined text-error">block</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">arrow_forward_ios</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant">Blocked job</h3>
+<p class="font-headline-md text-headline-md text-on-surface font-bold">1 active</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Check BOM</p>
+</div>
+</section>
+<!-- Priority Today -->
+<section class="space-y-md">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Priority Today</h2>
+<button class="text-primary font-label-md text-label-md hover:underline transition-all">View all</button>
+</div>
+<div class="space-y-sm">
+<!-- Item 1 -->
+<div class="bg-surface-container-high rounded-xl p-md border border-outline-variant/20 flex items-center justify-between gap-4">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-lg bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">science</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">SLES</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Need 25kg • <span class="text-error font-medium">Have 12kg</span></p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-2 py-0.5 rounded text-[10px] bg-surface-variant text-on-surface-variant uppercase tracking-wider font-bold">A1 Raw Materials</span>
+<span class="flex items-center gap-1 text-[10px] font-bold text-error uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span> Critical
+                                </span>
+</div>
+</div>
+</div>
+<button class="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md active:scale-95 transition-all">View</button>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface-container-high rounded-xl p-md border border-outline-variant/20 flex items-center justify-between gap-4">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-lg bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">inventory_2</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">500ml Bottle</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Need 380 pcs • <span class="text-tertiary font-medium">Have 120 pcs</span></p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-2 py-0.5 rounded text-[10px] bg-surface-variant text-on-surface-variant uppercase tracking-wider font-bold">A2 Packaging</span>
+<span class="flex items-center gap-1 text-[10px] font-bold text-tertiary-container uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span> Low
+                                </span>
+</div>
+</div>
+</div>
+<button class="px-4 py-2 rounded-lg bg-surface-variant text-on-surface font-label-md text-label-md active:scale-95 transition-all">View</button>
+</div>
+<!-- Item 3 -->
+<div class="bg-surface-container-high rounded-xl p-md border border-outline-variant/20 flex items-center justify-between gap-4">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-lg bg-error-container/10 flex items-center justify-center border border-error/20">
+<span class="material-symbols-outlined text-error">air</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Keeva Airzen Lavender</h4>
+<p class="font-body-sm text-body-sm text-error/80 font-medium">Blocked • Missing 2 items</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-2 py-0.5 rounded text-[10px] bg-surface-variant text-on-surface-variant uppercase tracking-wider font-bold">Target 100 gal</span>
+</div>
+</div>
+</div>
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md active:scale-95 transition-all whitespace-nowrap">Check BOM</button>
+</div>
+</div>
+</section>
+<!-- Weekly Estimate -->
+<section class="bg-surface-container-low rounded-xl p-md border border-outline-variant/20 flex flex-col sm:flex-row items-center justify-between gap-md mb-8">
+<div class="flex items-center gap-md">
+<div class="p-3 rounded-full bg-secondary-container/10">
+<span class="material-symbols-outlined text-secondary">payments</span>
+</div>
+<div>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant">Weekly estimate</h3>
+<p class="font-headline-md text-headline-md font-bold text-on-surface">₱18,450</p>
+</div>
+</div>
+<div class="h-px sm:h-8 w-full sm:w-px bg-outline-variant/20"></div>
+<div class="flex flex-wrap gap-x-4 gap-y-1 justify-center sm:justify-start">
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Raw ₱10.8k</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Packaging ₱4.2k</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Labor ₱3.45k</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-surface-container/90 backdrop-blur-xl border-t border-outline-variant/30 px-md py-sm pb-safe flex justify-around items-center">
+<button class="flex items-center justify-center bg-secondary-container text-on-secondary-container rounded-full p-3 shadow-[0_0_15px_rgba(2,103,184,0.4)] active:scale-90 duration-150">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">inventory_2</span>
+</button>
+<!-- Center FAB -->
+<div class="relative -top-6">
+<button class="w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</div>
+<button class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant p-3 hover:text-secondary-fixed-dim transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+</nav>
+<script>
+        // Micro-interactions and subtle glow effects
+        document.querySelectorAll('.hero-gradient').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+
+        // Simulating some dynamic data updates
+        setInterval(() => {
+            const timeSpan = document.querySelector('header .font-label-sm');
+            const hours = new Date().getHours();
+            if (hours >= 12 && hours < 17) timeSpan.textContent = "Good afternoon";
+            else if (hours >= 17 || hours < 4) timeSpan.textContent = "Good evening";
+            else timeSpan.textContent = "Good morning";
+        }, 60000);
+    </script>
+</body></html>
