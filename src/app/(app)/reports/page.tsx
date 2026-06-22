@@ -69,6 +69,13 @@ type FullBackup = {
   };
 };
 
+type BackupFileShape = Partial<Omit<FullBackup, "app" | "type">> & {
+  app?: string;
+  type?: string;
+  items?: unknown[];
+  data?: Partial<FullBackup["data"]>;
+};
+
 type SyncCheckState = {
   status: "idle" | "checking" | "connected" | "failed";
   message: string;
@@ -268,13 +275,14 @@ export default function ReportsPage() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const parsed = JSON.parse(String(reader.result)) as FullBackup;
-        if (parsed.app !== "NORTHVALE INV" || parsed.type !== "full-backup" || !parsed.data) {
+        const parsed = JSON.parse(String(reader.result)) as unknown;
+        const normalized = normalizeBackupFile(parsed);
+        if (!normalized) {
           triggerToast("Invalid NORTHVALE INV backup file.");
           return;
         }
-        setPendingBackup(parsed);
-        setBackupPreview(previewBackup(parsed));
+        setPendingBackup(normalized);
+        setBackupPreview(previewBackup(normalized));
         setRestoreError(null);
         setRestoreSummary(null);
         setLastImportStatus("Backup preview loaded. Restore not confirmed yet.");
@@ -611,6 +619,11 @@ export default function ReportsPage() {
               <span>Transactions: {backupPreview.transactions}</span>
               <span>Logs: {backupPreview.logs}</span>
             </div>
+            {backupPreview.boms === 0 && backupPreview.packingTemplates === 0 && (
+              <div className="mt-2 rounded-md border border-outline-variant/20 bg-surface-container px-2 py-1.5 text-[11.5px] leading-5 text-on-surface-variant">
+                This backup contains inventory and operating records, but no BOM Library or Packing Template records.
+              </div>
+            )}
             {backupPreview.warnings.length > 0 && (
               <div className="mt-2 rounded-md border border-warning/25 bg-warning/10 px-2 py-1.5 text-[11.5px] text-warning">
                 {backupPreview.warnings.join(" ")}
@@ -645,7 +658,7 @@ export default function ReportsPage() {
             </Button>
             {restoreSummary && (
               <p className="mt-2 text-[11.5px] leading-5 text-success">
-                Restored inventory {restoreSummary.restored.inventory}, BOMs {restoreSummary.restored.boms}, BOM lines {restoreSummary.restored.bomLines}, packing {restoreSummary.restored.packingTemplates}, packing lines {restoreSummary.restored.packingLines}, production {restoreSummary.restored.production}, quick orders {restoreSummary.restored.quickOrders}, transactions {restoreSummary.restored.transactions}, logs {restoreSummary.restored.logs}. Skipped duplicates {restoreSummary.inventorySkipped + restoreSummary.bomPackingSkipped}.
+                Inventory backup records {restoreSummary.restored.inventory}: added {restoreSummary.inventoryAdded}, updated {restoreSummary.inventoryUpdated}, skipped {restoreSummary.inventorySkipped}. BOMs {restoreSummary.restored.boms}, BOM lines {restoreSummary.restored.bomLines}, packing {restoreSummary.restored.packingTemplates}, packing lines {restoreSummary.restored.packingLines}, production {restoreSummary.restored.production}, quick orders {restoreSummary.restored.quickOrders}, transactions {restoreSummary.restored.transactions}, logs {restoreSummary.restored.logs}. Skipped duplicates {restoreSummary.inventorySkipped + restoreSummary.bomPackingSkipped}.
               </p>
             )}
             {restoreError && (
@@ -742,6 +755,57 @@ function cnRestoreMode(active: boolean) {
       ? "border-primary bg-primary text-on-primary"
       : "border-outline-variant/30 bg-surface-container text-on-surface-variant"
   ].join(" ");
+}
+
+function normalizeBackupFile(parsed: unknown): FullBackup | null {
+  if (!parsed || typeof parsed !== "object") return null;
+
+  const source = parsed as BackupFileShape;
+  const data: Partial<FullBackup["data"]> = source.data ?? {};
+  const inventoryItems = Array.isArray(data.inventoryItems)
+    ? data.inventoryItems
+    : Array.isArray(source.items)
+      ? source.items
+      : Array.isArray(parsed)
+        ? parsed
+        : [];
+
+  const hasRecognizedShape = source.type === "full-backup"
+    || source.type === "inventory-local-backup"
+    || source.app === "NORTHVALE INV"
+    || inventoryItems.length > 0
+    || Object.keys(data).length > 0;
+
+  if (!hasRecognizedShape) return null;
+
+  return {
+    app: "NORTHVALE INV",
+    type: "full-backup",
+    version: typeof source.version === "number" ? source.version : 1,
+    appVersion: typeof source.appVersion === "string" ? source.appVersion : "compat-import",
+    exportedAt: typeof source.exportedAt === "string" ? source.exportedAt : new Date().toISOString(),
+    appSettings: {
+      deploymentMode: "private-internal-beta",
+      safeSupabaseModules: ["Inventory", "BOM Library", "Packing Templates"],
+      localBackupBasedModules: ["Production Plans", "Quick Orders", "Stock Transactions", "Activity Logs", "Analytics source data"],
+      warning: "Compatibility import. Missing backup sections are treated as empty."
+    },
+    data: {
+      inventoryItems,
+      products: Array.isArray(data.products) ? data.products : [],
+      productBomLines: Array.isArray(data.productBomLines) ? data.productBomLines : [],
+      bomLibrary: Array.isArray(data.bomLibrary) ? data.bomLibrary : [],
+      productBomAssignments: Array.isArray(data.productBomAssignments) ? data.productBomAssignments : [],
+      packingTemplates: Array.isArray(data.packingTemplates) ? data.packingTemplates : [],
+      productionPlans: Array.isArray(data.productionPlans) ? data.productionPlans : [],
+      quickOrders: Array.isArray(data.quickOrders) ? data.quickOrders : [],
+      stockTransactions: Array.isArray(data.stockTransactions) ? data.stockTransactions : [],
+      activityLogs: Array.isArray(data.activityLogs) ? data.activityLogs : [],
+      analyticsSource: data.analyticsSource && typeof data.analyticsSource === "object" && !Array.isArray(data.analyticsSource)
+        ? data.analyticsSource as Record<string, unknown>
+        : {}
+    }
+  };
 }
 
 function getSupabaseProjectRef() {
