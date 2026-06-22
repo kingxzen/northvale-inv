@@ -201,6 +201,11 @@ export async function restoreInventoryToSupabase(
       ?? byKey.get(item.name.trim().toLowerCase());
 
     if (match && mode === "safe-merge") {
+      if (match.isArchived && item.isArchived === false) {
+        await updateInventoryItemInSupabase(match.id, { isArchived: false });
+        updated += 1;
+        continue;
+      }
       skipped += 1;
       continue;
     }

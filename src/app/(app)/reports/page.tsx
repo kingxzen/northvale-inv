@@ -658,7 +658,7 @@ export default function ReportsPage() {
             </Button>
             {restoreSummary && (
               <p className="mt-2 text-[11.5px] leading-5 text-success">
-                Inventory backup records {restoreSummary.restored.inventory}: added {restoreSummary.inventoryAdded}, updated {restoreSummary.inventoryUpdated}, skipped {restoreSummary.inventorySkipped}. BOMs {restoreSummary.restored.boms}, BOM lines {restoreSummary.restored.bomLines}, packing {restoreSummary.restored.packingTemplates}, packing lines {restoreSummary.restored.packingLines}, production {restoreSummary.restored.production}, quick orders {restoreSummary.restored.quickOrders}, transactions {restoreSummary.restored.transactions}, logs {restoreSummary.restored.logs}. Skipped duplicates {restoreSummary.inventorySkipped + restoreSummary.bomPackingSkipped}.
+                Inventory backup records {restoreSummary.restored.inventory}: added {restoreSummary.inventoryAdded}, reactivated/updated {restoreSummary.inventoryUpdated}, skipped {restoreSummary.inventorySkipped}. BOMs {restoreSummary.restored.boms}, BOM lines {restoreSummary.restored.bomLines}, packing {restoreSummary.restored.packingTemplates}, packing lines {restoreSummary.restored.packingLines}, production {restoreSummary.restored.production}, quick orders {restoreSummary.restored.quickOrders}, transactions {restoreSummary.restored.transactions}, logs {restoreSummary.restored.logs}. Skipped duplicates {restoreSummary.inventorySkipped + restoreSummary.bomPackingSkipped}.
               </p>
             )}
             {restoreError && (
