@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/browser";
+import { hasSupabaseConfig } from "@/lib/supabase/config";
 import type { InventoryItem } from "@/types/domain";
 
 type InventoryRow = {
@@ -43,7 +44,7 @@ export class InventorySupabaseError extends Error {
 }
 
 export function isSupabaseConfigured() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  return hasSupabaseConfig();
 }
 
 const isUuid = (value: string) =>

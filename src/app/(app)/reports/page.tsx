@@ -17,6 +17,7 @@ import {
   getQuickOrders
 } from "@/lib/operations-store";
 import { createClient } from "@/lib/supabase/browser";
+import { getSupabaseUrl } from "@/lib/supabase/config";
 import { isSupabaseConfigured } from "@/lib/supabase/repositories/inventory";
 import {
   listMasterBomsFromSupabase,
@@ -744,7 +745,7 @@ function cnRestoreMode(active: boolean) {
 }
 
 function getSupabaseProjectRef() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = getSupabaseUrl();
   if (!url) return "Not configured";
 
   try {
