@@ -22,52 +22,11 @@ const APP_LOCAL_STORAGE_KEYS = [
   "prodstock_quick_orders"
 ];
 
-const NIL_UUID = "00000000-0000-0000-0000-000000000000";
-
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 export function clearFreshStartLocalData() {
   APP_LOCAL_STORAGE_KEYS.forEach((key) => window.localStorage.removeItem(key));
-}
-
-async function deleteAllRows(table: string) {
-  const supabase = createClient();
-  const { error } = await supabase.from(table).delete().neq("id", NIL_UUID);
-  if (!error) return;
-
-  const missingTable = error.code === "PGRST205" || error.code === "42P01";
-  if (missingTable && table !== "inventory_items") return;
-
-  throw new Error(`${table}: ${error.message}${error.code ? ` (${error.code})` : ""}${error.hint ? ` Hint: ${error.hint}` : ""}`);
-}
-
-async function clearSupabaseBusinessTables() {
-  const orderedTables = [
-    "quick_order_logs",
-    "quick_order_materials",
-    "quick_order_packing_groups",
-    "quick_order_lines",
-    "quick_orders",
-    "stock_transactions",
-    "production_additional_materials",
-    "production_product_lines",
-    "production_job_lines",
-    "production_jobs",
-    "product_bom_assignments",
-    "packing_template_lines",
-    "packing_templates",
-    "master_bom_lines",
-    "master_boms",
-    "product_bom_lines",
-    "products",
-    "activity_logs",
-    "inventory_items"
-  ];
-
-  for (const table of orderedTables) {
-    await deleteAllRows(table);
-  }
 }
 
 async function archiveRemainingInventoryRows() {
@@ -79,9 +38,6 @@ async function archiveRemainingInventoryRows() {
     let query = supabase
       .from("inventory_items")
       .update({
-        quantity_on_hand: 0,
-        unit_cost: null,
-        status: "active",
         is_archived: true
       })
       .select("id");
@@ -96,6 +52,26 @@ async function archiveRemainingInventoryRows() {
   return refreshed.items;
 }
 
+async function archiveSupabaseTable(table: string) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from(table)
+    .update({ status: "archived" })
+    .neq("status", "archived");
+
+  if (!error) return;
+
+  const missingTable = error.code === "PGRST205" || error.code === "42P01";
+  if (missingTable) return;
+
+  throw new Error(`${table}: ${error.message}${error.code ? ` (${error.code})` : ""}${error.hint ? ` Hint: ${error.hint}` : ""}`);
+}
+
+async function archiveSupabaseBusinessTables() {
+  await archiveSupabaseTable("master_boms");
+  await archiveSupabaseTable("packing_templates");
+}
+
 export async function runFreshStartReset(): Promise<FreshStartResult> {
   clearFreshStartLocalData();
 
@@ -103,7 +79,7 @@ export async function runFreshStartReset(): Promise<FreshStartResult> {
     return { cleared: true, items: [] };
   }
 
-  await clearSupabaseBusinessTables();
+  await archiveSupabaseBusinessTables();
   const items = await archiveRemainingInventoryRows();
 
   return { cleared: true, items };
