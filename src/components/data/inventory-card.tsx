@@ -39,6 +39,8 @@ export function InventoryCard({ item, location, detailHref, editHref, stockInHre
   const Icon = iconByCategory[item.category];
   const categoryLabel = item.category === "raw" ? "Raw" : item.category === "asset" ? "Asset" : item.category[0].toUpperCase() + item.category.slice(1);
   const metadata = `${categoryLabel} \u2022 ${location?.code ?? "No area"} \u2022 ${item.quantityOnHand} ${item.unit}`;
+  const displayStatus = item.reorderPoint <= 0 && item.quantityOnHand <= 0 && item.category !== "asset" ? "active" : item.reorderPoint <= 0 ? "active" : item.status;
+  const displayLabel = item.reorderPoint <= 0 && item.quantityOnHand <= 0 && item.category !== "asset" ? "ZERO" : displayStatus.toUpperCase();
 
   const content = (
     <>
@@ -79,8 +81,8 @@ export function InventoryCard({ item, location, detailHref, editHref, stockInHre
       <div className="relative z-10 flex min-w-0 flex-1 items-center gap-3 pointer-events-none">{content}</div>
 
       <div className="pointer-events-none relative z-20 flex shrink-0 items-center gap-1">
-        <span className={cn("rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-4", statusStyles[item.status])}>
-          {item.status.toUpperCase()}
+        <span className={cn("rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-4", statusStyles[displayStatus])}>
+          {displayLabel}
         </span>
         {editHref || onDuplicate || stockInHref || stockOutHref || adjustHref || onArchive ? (
           <button

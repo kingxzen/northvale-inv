@@ -55,6 +55,7 @@ export type QuickOrderRecord = {
   processedBy?: string;
   completedBy?: string;
   notes?: string;
+  otherExpense?: number;
   lines: { id?: string; productId: string; quantity: number; notes?: string }[];
   groups: { id: string; templateId: string; assignedLineIds: string[]; manualSets: string; notes?: string }[];
   materials: { name: string; inventoryItemId?: string; required: number; unit: InventoryUnit; cost?: number }[];

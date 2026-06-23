@@ -11,7 +11,7 @@ import { useApp } from "@/context/app-context";
 import { cn } from "@/lib/utils";
 import type { StockStatus } from "@/types/domain";
 
-type StatusFilter = Extract<StockStatus, "critical" | "low"> | "active" | null;
+type StatusFilter = Extract<StockStatus, "critical" | "low"> | "active" | "zero_qty" | null;
 
 export default function InventoryPage() {
   const {
@@ -36,8 +36,9 @@ export default function InventoryPage() {
 
   // Active (non-archived) items calculations for counters
   const activeItemsList = useMemo(() => inventoryItems.filter(item => !item.isArchived), [inventoryItems]);
-  const critical = useMemo(() => activeItemsList.filter((item) => item.status === "critical").length, [activeItemsList]);
-  const low = useMemo(() => activeItemsList.filter((item) => item.status === "low").length, [activeItemsList]);
+  const critical = useMemo(() => activeItemsList.filter((item) => item.reorderPoint > 0 && item.status === "critical").length, [activeItemsList]);
+  const low = useMemo(() => activeItemsList.filter((item) => item.reorderPoint > 0 && item.status === "low").length, [activeItemsList]);
+  const zeroQty = useMemo(() => activeItemsList.filter((item) => item.reorderPoint <= 0 && item.quantityOnHand <= 0 && item.category !== "asset").length, [activeItemsList]);
 
   const filteredAndSortedItems = useMemo(() => {
     // Determine whether to show archived items or only active ones
@@ -47,7 +48,13 @@ export default function InventoryPage() {
 
     // Filter by summary status
     if (statusFilter === "critical" || statusFilter === "low") {
-      items = items.filter((item) => item.status === statusFilter);
+      items = items.filter((item) => item.reorderPoint > 0 && item.status === statusFilter);
+    }
+    if (statusFilter === "zero_qty") {
+      items = items.filter((item) => item.reorderPoint <= 0 && item.quantityOnHand <= 0 && item.category !== "asset");
+    }
+    if (statusFilter === "active") {
+      items = items.filter((item) => !item.isArchived);
     }
 
     // Filter by category chip
@@ -218,7 +225,7 @@ export default function InventoryPage() {
         </div>
       )}
 
-      <section className="mt-3 grid h-12 grid-cols-3 items-center rounded-lg border border-outline-variant/30 bg-surface-container px-1">
+      <section className="mt-3 grid h-12 grid-cols-4 items-center rounded-lg border border-outline-variant/30 bg-surface-container px-1">
         <SummaryItem
           label="Critical"
           value={critical}
@@ -237,6 +244,16 @@ export default function InventoryPage() {
           onClick={() => {
             setShowArchived(false);
             setStatusFilter("low");
+          }}
+        />
+        <SummaryItem
+          label="Zero qty"
+          value={zeroQty}
+          tone="text-warning"
+          active={statusFilter === "zero_qty"}
+          onClick={() => {
+            setShowArchived(false);
+            setStatusFilter("zero_qty");
           }}
         />
         <SummaryItem

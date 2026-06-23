@@ -2,7 +2,8 @@
 
 import { ChangeEvent, useRef, useState, useMemo } from "react";
 import Link from "next/link";
-import { Database, Download, Filter, PackageSearch, TrendingUp, History, Upload, FileDown, ShieldAlert } from "lucide-react";
+import { Database, Download, Filter, PackageSearch, Search, TrendingUp, History, Upload, FileDown, ShieldAlert } from "lucide-react";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,9 +90,13 @@ const SYNC_TABLE_LABELS: Record<string, string> = {
   packing_template_lines: "Packing Template lines"
 };
 
+const PIE_COLORS = ["#adc6ff", "#55d6be", "#ffd166", "#f87171"];
+
 export default function ReportsPage() {
   const { inventoryItems, productionJobs, stockTransactions, products, productBomLines, activityLogs, inventoryError, freshStartReset, restoreFullBackup } = useApp();
   const [activeFilter, setActiveFilter] = useState<"week" | "month">("week");
+  const [reportSearch, setReportSearch] = useState("");
+  const [consumptionType, setConsumptionType] = useState<"all" | "raw" | "packaging">("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [backupPreview, setBackupPreview] = useState<BackupPreview | null>(null);
   const [pendingBackup, setPendingBackup] = useState<FullBackup | null>(null);
@@ -152,10 +157,61 @@ export default function ReportsPage() {
       const dayIndex = Math.max(0, Math.min(6, (created.getDay() + 6) % 7));
       chartData[dayIndex].cost += value;
       return acc;
-    }, { raw: 0, packaging: 0, labor: 0, total: 0 });
+    }, { raw: 0, packaging: 0, labor: 0, other: 0, total: 0 });
+
+    getQuickOrders().forEach((order) => {
+      const dateValue = order.processedAt ?? order.packedAt ?? order.completedAt ?? order.createdAt;
+      const created = new Date(dateValue);
+      if (created < start || created > end) return;
+      const otherExpense = Number(order.otherExpense ?? 0);
+      totals.other += otherExpense;
+      totals.total += otherExpense;
+      const dayIndex = Math.max(0, Math.min(6, (created.getDay() + 6) % 7));
+      chartData[dayIndex].cost += otherExpense;
+    });
 
     return { ...totals, chartData };
   }, [activeFilter, inventoryItems, stockTransactions]);
+
+  const consumptionReport = useMemo(() => {
+    const now = new Date();
+    const start = activeFilter === "week"
+      ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7))
+      : new Date(now.getFullYear(), now.getMonth(), 1);
+    start.setHours(0, 0, 0, 0);
+    const end = activeFilter === "week"
+      ? new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6, 23, 59, 59, 999)
+      : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const query = reportSearch.trim().toLowerCase();
+    const consumptionTypes = new Set(["stock_out", "production_release", "production_consume", "quick_order_packing_material_out"]);
+    const rows = new Map<string, { id: string; name: string; category: string; quantity: number; unit: string; cost: number }>();
+
+    stockTransactions.forEach((txn) => {
+      const created = new Date(txn.createdAt);
+      if (created < start || created > end || !consumptionTypes.has(txn.type)) return;
+      const item = inventoryItems.find((entry) => entry.id === txn.inventoryItemId);
+      if (!item || (item.category !== "raw" && item.category !== "packaging")) return;
+      if (consumptionType !== "all" && item.category !== consumptionType) return;
+      if (query && !`${item.name} ${item.sku} ${item.category}`.toLowerCase().includes(query)) return;
+      const current = rows.get(item.id) ?? { id: item.id, name: item.name, category: item.category, quantity: 0, unit: item.unit, cost: 0 };
+      current.quantity += Number(txn.quantity || 0);
+      current.cost += Number(txn.quantity || 0) * (item.unitCost ?? 0);
+      rows.set(item.id, current);
+    });
+
+    const list = Array.from(rows.values()).sort((a, b) => b.cost - a.cost || b.quantity - a.quantity).slice(0, 10);
+    const total = list.reduce((sum, row) => sum + row.cost, 0);
+    return {
+      list,
+      total,
+      pie: [
+        { name: "Raw materials", value: expenseSummary.raw },
+        { name: "Packaging", value: expenseSummary.packaging },
+        { name: "Manpower", value: expenseSummary.labor },
+        { name: "Logistics/Other", value: expenseSummary.other }
+      ].filter((item) => item.value > 0)
+    };
+  }, [activeFilter, consumptionType, expenseSummary.labor, expenseSummary.other, expenseSummary.packaging, expenseSummary.raw, inventoryItems, reportSearch, stockTransactions]);
 
   const buildFullBackup = async (): Promise<FullBackup> => {
     const quickOrders = getQuickOrders();
@@ -485,8 +541,116 @@ export default function ReportsPage() {
           <MiniReport label="Raw" value={expenseSummary.raw} />
           <MiniReport label="Packaging" value={expenseSummary.packaging} />
           <MiniReport label="Manpower" value={expenseSummary.labor} />
+          <MiniReport label="Logistics/Other" value={expenseSummary.other} />
         </div>
       </section>
+
+      <Card className="mt-6 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-label-md uppercase font-bold text-on-surface">Consumption report</h3>
+            <p className="mt-1 text-[12.5px] leading-5 text-on-surface-variant">
+              Top raw and packaging usage from stock-out and production/quick-order transactions.
+            </p>
+          </div>
+          <Badge tone={consumptionReport.list.length > 0 ? "good" : "neutral"}>Top 10</Badge>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-outline" />
+            <input
+              value={reportSearch}
+              onChange={(event) => setReportSearch(event.target.value)}
+              placeholder="Search SLES, bottle, box..."
+              className="h-10 w-full rounded-md border border-outline bg-surface-container px-3 pl-9 text-[13px] text-white outline-none placeholder:text-on-surface-variant focus:border-primary"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {(["all", "raw", "packaging"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setConsumptionType(value)}
+                className={[
+                  "h-10 rounded-md border px-2 text-[12px] font-semibold capitalize transition",
+                  consumptionType === value
+                    ? "border-primary bg-primary text-on-primary"
+                    : "border-outline-variant/30 bg-surface-container text-on-surface-variant"
+                ].join(" ")}
+              >
+                {value === "all" ? "All" : value === "raw" ? "Raw" : "Pack"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_220px]">
+          <div className="space-y-2">
+            {consumptionReport.list.length > 0 ? (
+              consumptionReport.list.map((row) => (
+                <div key={row.id} className="rounded-md border border-outline-variant/20 bg-surface-container-low px-3 py-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-semibold text-white">{row.name}</p>
+                      <p className="mt-0.5 text-[11.5px] capitalize text-on-surface-variant">
+                        {row.category} {"\u2022"} {roundReportQty(row.quantity)} {row.unit}
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-[13px] font-bold text-primary">{formatMoney(row.cost)}</p>
+                  </div>
+                  <div className="mt-2 h-1.5 rounded-full bg-surface-container-high">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${consumptionReport.total > 0 ? Math.max(5, Math.round((row.cost / consumptionReport.total) * 100)) : 0}%` }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="rounded-md border border-outline-variant/20 bg-surface-container-low px-3 py-4 text-center text-[13px] text-on-surface-variant">
+                No raw or packaging consumption in this range.
+              </p>
+            )}
+          </div>
+          <div className="rounded-lg border border-outline-variant/20 bg-surface-container-low p-3">
+            <p className="text-[12px] font-bold uppercase text-outline">Expense split</p>
+            {consumptionReport.pie.length > 0 ? (
+              <>
+                <div className="mt-2 h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={consumptionReport.pie} dataKey="value" nameKey="name" innerRadius={42} outerRadius={62} paddingAngle={3}>
+                        {consumptionReport.pie.map((entry, index) => (
+                          <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ background: "#1e2023", border: "1px solid #424754", borderRadius: 12, color: "#e2e2e6" }}
+                        formatter={(value) => formatMoney(Number(value))}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-2 space-y-1.5">
+                  {consumptionReport.pie.map((item, index) => {
+                    const total = consumptionReport.pie.reduce((sum, row) => sum + row.value, 0);
+                    return (
+                      <div key={item.name} className="flex items-center justify-between gap-2 text-[11.5px] text-on-surface-variant">
+                        <span className="flex min-w-0 items-center gap-1.5 truncate">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
+                          {item.name}
+                        </span>
+                        <span className="font-semibold text-white">{total > 0 ? Math.round((item.value / total) * 100) : 0}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="mt-4 text-[12.5px] leading-5 text-on-surface-variant">No expense split yet.</p>
+            )}
+          </div>
+        </div>
+      </Card>
 
       <Card className="mt-6 p-5">
         <div className="flex items-center justify-between mb-4">
@@ -737,6 +901,11 @@ function MiniReport({ label, value }: Readonly<{ label: string; value: number }>
       </div>
     </Card>
   );
+}
+
+function roundReportQty(value: number) {
+  if (Number.isInteger(value)) return String(value);
+  return value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
 }
 
 function SyncField({ label, value }: Readonly<{ label: string; value: string }>) {

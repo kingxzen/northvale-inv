@@ -33,6 +33,7 @@ export default function NewQuickOrderPage() {
   const [targetShipDate, setTargetShipDate] = useState("");
   const [preparedBy, setPreparedBy] = useState("");
   const [notes, setNotes] = useState("");
+  const [otherExpense, setOtherExpense] = useState("");
   const [message, setMessage] = useState("");
   const [templateLoadMessage, setTemplateLoadMessage] = useState("");
   const [submittedOrderStatus, setSubmittedOrderStatus] = useState<"draft" | "processed" | null>(null);
@@ -147,6 +148,7 @@ export default function NewQuickOrderPage() {
     preparedBy: preparedBy || "Admin",
     processedBy: status === "processed" ? preparedBy || "Admin" : undefined,
     notes,
+    otherExpense: otherExpense === "" ? undefined : Math.max(0, Number(otherExpense) || 0),
     lines,
     groups,
     materials: materialSummary.map(item => ({ name: item.name, inventoryItemId: item.inventoryItemId, required: item.required, unit: item.unit as QuickOrderRecord["materials"][number]["unit"], cost: item.cost })),
@@ -232,7 +234,8 @@ export default function NewQuickOrderPage() {
           <Field label="Ship date"><Input type="date" value={targetShipDate} onChange={e => setTargetShipDate(e.target.value)} className="h-10 text-[13px]" /></Field>
           <Field label="Reference no."><Input value={referenceNo} onChange={e => setReferenceNo(e.target.value)} className="h-10 text-[13px]" placeholder="ORDER-001" /></Field>
           <Field label="Prepared by"><Input value={preparedBy} onChange={e => setPreparedBy(e.target.value)} className="h-10 text-[13px]" /></Field>
-          <div className="col-span-2"><Field label="Notes"><Input value={notes} onChange={e => setNotes(e.target.value)} className="h-10 text-[13px]" /></Field></div>
+          <Field label="Other expense"><Input type="number" min={0} value={otherExpense} onChange={e => setOtherExpense(e.target.value)} className="h-10 text-[13px]" placeholder="Courier, gas, third-party" /></Field>
+          <Field label="Notes"><Input value={notes} onChange={e => setNotes(e.target.value)} className="h-10 text-[13px]" /></Field>
         </div>
       </Card>
       {templateLoadMessage && <Card className="mt-3 rounded-lg border border-warning/25 bg-warning/10 p-3 text-[12.5px] text-warning">{templateLoadMessage}</Card>}

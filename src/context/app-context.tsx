@@ -290,6 +290,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [activityLogs, hydrated]);
 
   const helperCalculateStatus = (quantity: number, reorderPoint: number): "critical" | "low" | "good" | "active" => {
+    if (reorderPoint <= 0) return "active";
     if (quantity <= reorderPoint * 0.5) return "critical";
     if (quantity <= reorderPoint) return "low";
     return "good";
