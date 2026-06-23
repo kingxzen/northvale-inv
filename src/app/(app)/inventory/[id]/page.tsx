@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState, useEffect } from "react";
+import { use, useId, useMemo, useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
@@ -42,6 +42,10 @@ import {
   saveProductBomAssignments,
   type MasterBom
 } from "@/lib/operations-store";
+import {
+  formatSupabaseOperationalError,
+  listMasterBomsFromSupabase
+} from "@/lib/supabase/repositories/bom-packing";
 
 export default function InventoryItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -157,8 +161,11 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
   const [copySourceProductId, setCopySourceProductId] = useState("");
   const [copyMethod, setCopyMethod] = useState<"replace" | "append">("replace");
   const [masterBoms, setMasterBoms] = useState<MasterBom[]>([]);
+  const [masterBomLoadError, setMasterBomLoadError] = useState<string | null>(null);
+  const [isLoadingMasterBoms, setIsLoadingMasterBoms] = useState(false);
   const [bomAssignments, setBomAssignments] = useState(getProductBomAssignments());
   const [selectedMasterBomId, setSelectedMasterBomId] = useState("");
+  const [masterBomSearch, setMasterBomSearch] = useState("");
   const [isChangeMasterBomOpen, setIsChangeMasterBomOpen] = useState(false);
 
   // Alert Banner State
@@ -192,14 +199,51 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
   }, [product, bomLines, isEditBOMOpen]);
 
   useEffect(() => {
-    const boms = getMasterBoms();
-    const assignments = getProductBomAssignments();
-    setMasterBoms(boms);
-    setBomAssignments(assignments);
-    if (product) {
-      const current = assignments.find(entry => entry.productId === product.id);
-      setSelectedMasterBomId(current?.bomId ?? boms[0]?.id ?? "");
+    let active = true;
+    async function loadMasterBoms() {
+      setIsLoadingMasterBoms(true);
+      setMasterBomLoadError(null);
+      try {
+        const boms = await listMasterBomsFromSupabase();
+        if (!active) return;
+        const assignments = getProductBomAssignments();
+        setMasterBoms(boms);
+        setBomAssignments(assignments);
+        if (product) {
+          const current = assignments.find(entry => entry.productId === product.id);
+          setSelectedMasterBomId(current?.bomId ?? boms.find(bom => bom.status === "active")?.id ?? "");
+        }
+      } catch (error) {
+        if (!active) return;
+        const fallbackBoms = getMasterBoms();
+        const assignments = getProductBomAssignments();
+        setMasterBoms(fallbackBoms);
+        setBomAssignments(assignments);
+        setMasterBomLoadError(`${formatSupabaseOperationalError(error)} Showing local fallback only.`);
+        if (product) {
+          const current = assignments.find(entry => entry.productId === product.id);
+          setSelectedMasterBomId(current?.bomId ?? fallbackBoms.find(bom => bom.status === "active")?.id ?? "");
+        }
+      } finally {
+        if (active) setIsLoadingMasterBoms(false);
+      }
     }
+    void loadMasterBoms();
+    return () => {
+      active = false;
+    };
+  }, [product]);
+
+  useEffect(() => {
+    const activeBoms = masterBoms.filter(bom => bom.status === "active");
+    if (activeBoms.length > 0 && !activeBoms.some(bom => bom.id === selectedMasterBomId)) {
+      setSelectedMasterBomId(activeBoms[0].id);
+    }
+  }, [masterBoms, selectedMasterBomId]);
+
+  useEffect(() => {
+    const assignments = getProductBomAssignments();
+    setBomAssignments(assignments);
   }, [product]);
 
   if (!item) {
@@ -618,12 +662,14 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
       notes: line.notes
     }));
     updateProductBom(product.id, linesToApply);
+    setTempBomLines(linesToApply);
     saveAssignment({
       productId: product.id,
       bomId: masterBom.id,
       type: mode,
       customLines: mode === "custom" ? masterBom.lines.map(line => ({ ...line })) : undefined
     });
+    setSelectedMasterBomId(masterBom.id);
     setIsChangeMasterBomOpen(false);
     triggerBanner(mode === "linked" ? "Linked master BOM assigned." : "Master BOM copied into custom product BOM.");
   };
@@ -797,25 +843,42 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
 
               {isChangeMasterBomOpen && (
                 <div className="mt-3 rounded-md border border-outline-variant/25 bg-surface-container-low p-2">
-                  <label className="block space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-outline">Searchable BOM Library</span>
-                    <select value={selectedMasterBomId} onChange={event => setSelectedMasterBomId(event.target.value)} className="h-10 w-full rounded-md border border-outline bg-surface-container px-2 text-[13px] text-white">
-                      {masterBoms.filter(bom => bom.status === "active").map(bom => (
-                        <option key={bom.id} value={bom.id}>{bom.name} - {bom.family}</option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase text-outline">Search BOM Library</span>
+                      <span className="text-[10.5px] text-on-surface-variant">
+                        {isLoadingMasterBoms ? "Loading..." : `${masterBoms.filter(bom => bom.status === "active").length} active`}
+                      </span>
+                    </div>
+                    <SearchableBomPicker
+                      boms={masterBoms.filter(bom => bom.status === "active")}
+                      query={masterBomSearch}
+                      value={selectedMasterBomId}
+                      onQueryChange={setMasterBomSearch}
+                      onChange={(bomId) => setSelectedMasterBomId(bomId)}
+                    />
+                    {masterBomLoadError && (
+                      <p className="rounded-md border border-warning/25 bg-warning/10 px-2 py-1.5 text-[11.5px] leading-5 text-warning">
+                        {masterBomLoadError}
+                      </p>
+                    )}
+                    {!isLoadingMasterBoms && masterBoms.filter(bom => bom.status === "active").length === 0 && (
+                      <p className="rounded-md border border-outline-variant/20 bg-surface-container px-2 py-2 text-[12px] text-on-surface-variant">
+                        No active BOMs found. Create one in BOM Library first.
+                      </p>
+                    )}
+                  </div>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <Button size="sm" variant="ghost" onClick={() => {
                       const bom = masterBoms.find(entry => entry.id === selectedMasterBomId);
                       if (bom && window.confirm(`Change product to linked BOM "${bom.name}"?`)) applyMasterBomToProduct(bom, "linked");
-                    }}>
+                    }} disabled={!selectedMasterBomId}>
                       Use linked BOM
                     </Button>
                     <Button size="sm" onClick={() => {
                       const bom = masterBoms.find(entry => entry.id === selectedMasterBomId);
                       if (bom) applyMasterBomToProduct(bom, "custom");
-                    }}>
+                    }} disabled={!selectedMasterBomId}>
                       Copy customize
                     </Button>
                   </div>
@@ -1889,5 +1952,103 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
         </div>
       )}
     </AppShell>
+  );
+}
+
+function SearchableBomPicker({
+  boms,
+  value,
+  query,
+  onQueryChange,
+  onChange
+}: Readonly<{
+  boms: MasterBom[];
+  value: string;
+  query: string;
+  onQueryChange: (value: string) => void;
+  onChange: (bomId: string) => void;
+}>) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const previousSelectedIdRef = useRef<string>("");
+  const listboxId = useId();
+  const [isOpen, setIsOpen] = useState(false);
+  const selected = boms.find(bom => bom.id === value);
+
+  useEffect(() => {
+    if (selected && previousSelectedIdRef.current !== selected.id) {
+      previousSelectedIdRef.current = selected.id;
+      onQueryChange(`${selected.name} - ${selected.family}`);
+    }
+  }, [onQueryChange, selected]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, []);
+
+  const matches = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    const source = normalized
+      ? boms.filter(bom => `${bom.name} ${bom.family} ${bom.yieldQty} ${bom.yieldUnit}`.toLowerCase().includes(normalized))
+      : boms;
+    return source.slice(0, 10);
+  }, [boms, query]);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-outline" />
+        <Input
+          aria-autocomplete="list"
+          aria-controls={listboxId}
+          aria-expanded={isOpen}
+          className="h-10 pl-9 text-[13px]"
+          onChange={event => {
+            onQueryChange(event.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          placeholder="Search BOM name, family, or yield..."
+          role="combobox"
+          value={query}
+        />
+      </div>
+      {isOpen && (
+        <div id={listboxId} className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-64 overflow-y-auto rounded-md border border-outline-variant bg-surface-container-high p-1 shadow-xl">
+          {matches.length === 0 ? (
+            <p className="px-2 py-3 text-center text-[12px] text-on-surface-variant">No matching BOM found.</p>
+          ) : matches.map(bom => (
+            <button
+              key={bom.id}
+              type="button"
+              role="option"
+              aria-selected={bom.id === value}
+              className={cn(
+                "block w-full rounded px-2 py-2 text-left text-[12px] text-white hover:bg-surface-variant",
+                bom.id === value && "bg-primary/15 text-primary"
+              )}
+              onClick={() => {
+                onChange(bom.id);
+                onQueryChange(`${bom.name} - ${bom.family}`);
+                setIsOpen(false);
+              }}
+            >
+              <span className="block truncate font-semibold">{bom.name}</span>
+              <span className="block truncate text-[11px] text-on-surface-variant">
+                {bom.family} &bull; Yield {bom.yieldQty} {bom.yieldUnit} &bull; {bom.lines.length} lines
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      {selected && (
+        <p className="mt-1 text-[11.5px] text-on-surface-variant">
+          Selected: {selected.name} &bull; {selected.lines.length} BOM lines will sync to this product when applied.
+        </p>
+      )}
+    </div>
   );
 }
