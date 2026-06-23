@@ -16,7 +16,9 @@ import {
   Wrench,
   X,
   ChevronRight,
-  PackageCheck
+  ClipboardList,
+  PackageCheck,
+  PackageMinus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -98,6 +100,36 @@ export function BottomNav() {
             <div className="flex-grow pt-0.5">
               <p className="text-label-md text-on-surface">Quick Order / Packing</p>
               <p className="text-body-sm text-on-surface-variant mt-0.5">Ecommerce or retail packing order</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-outline self-center opacity-0 group-hover:opacity-100 transition" />
+            </Link>
+
+            <Link
+              href="/quick-plan/new"
+              onClick={closeSheet}
+              className="flex items-start gap-4 p-4 rounded-2xl bg-surface-container/50 border border-outline-variant/10 hover:bg-surface-container-highest/50 active:scale-[0.98] transition text-left group"
+            >
+            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition">
+              <PackageMinus className="h-6 w-6" />
+            </div>
+            <div className="flex-grow pt-0.5">
+              <p className="text-label-md text-on-surface">Quick Plan</p>
+              <p className="text-body-sm text-on-surface-variant mt-0.5">Finished goods out with notes or optional materials</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-outline self-center opacity-0 group-hover:opacity-100 transition" />
+            </Link>
+
+            <Link
+              href="/production/tasks"
+              onClick={closeSheet}
+              className="flex items-start gap-4 p-4 rounded-2xl bg-surface-container/50 border border-outline-variant/10 hover:bg-surface-container-highest/50 active:scale-[0.98] transition text-left group"
+            >
+            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-secondary-container/20 flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition">
+              <ClipboardList className="h-6 w-6" />
+            </div>
+            <div className="flex-grow pt-0.5">
+              <p className="text-label-md text-on-surface">Production Task</p>
+              <p className="text-body-sm text-on-surface-variant mt-0.5">Separate to-do list, not mixed with plan jobs</p>
             </div>
             <ChevronRight className="h-5 w-5 text-outline self-center opacity-0 group-hover:opacity-100 transition" />
             </Link>

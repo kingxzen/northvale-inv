@@ -10,15 +10,23 @@ export type QuickPlanMaterial = {
   note?: string;
 };
 
+export type QuickPlanFinishedGoodLine = {
+  id: string;
+  inventoryItemId: string;
+  quantity: number;
+  unit: InventoryUnit;
+};
+
 export type QuickPlan = {
   id: string;
   status: "draft" | "completed";
   title: string;
   purpose: QuickPlanPurpose;
   reference?: string;
-  finishedGoodItemId: string;
-  finishedGoodQty: number;
-  finishedGoodUnit: InventoryUnit;
+  finishedGoods: QuickPlanFinishedGoodLine[];
+  finishedGoodItemId?: string;
+  finishedGoodQty?: number;
+  finishedGoodUnit?: InventoryUnit;
   bomNote?: string;
   materials: QuickPlanMaterial[];
   otherCost?: number;

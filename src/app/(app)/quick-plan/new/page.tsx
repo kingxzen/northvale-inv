@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageBackButton } from "@/components/layout/page-back-button";
@@ -11,10 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { SearchableInventoryPicker } from "@/components/ui/searchable-inventory-picker";
 import { useApp } from "@/context/app-context";
 import { compatibleUnitsFor, convertQuantityForInventory } from "@/lib/units";
-import { getQuickPlans, makeQuickPlanId, saveQuickPlans, type QuickPlan, type QuickPlanMaterial, type QuickPlanPurpose } from "@/lib/quick-plans";
+import { getQuickPlans, makeQuickPlanId, saveQuickPlans, type QuickPlan, type QuickPlanFinishedGoodLine, type QuickPlanMaterial, type QuickPlanPurpose } from "@/lib/quick-plans";
 import type { InventoryItem, InventoryUnit } from "@/types/domain";
 
 type MaterialDraft = QuickPlanMaterial;
+type FinishedGoodDraft = QuickPlanFinishedGoodLine;
 
 export default function NewQuickPlanPage() {
   const { inventoryItems, updateInventoryItem, addStockTransaction, addActivityLog } = useApp();
@@ -25,8 +26,9 @@ export default function NewQuickPlanPage() {
   const [title, setTitle] = useState("Quick finished goods out");
   const [purpose, setPurpose] = useState<QuickPlanPurpose>("customer");
   const [reference, setReference] = useState("");
-  const [finishedGoodItemId, setFinishedGoodItemId] = useState(firstFinished?.id ?? "");
-  const [finishedGoodQty, setFinishedGoodQty] = useState(1);
+  const [finishedGoods, setFinishedGoods] = useState<FinishedGoodDraft[]>(
+    firstFinished ? [{ id: makeQuickPlanId("qfg"), inventoryItemId: firstFinished.id, quantity: 1, unit: firstFinished.unit }] : []
+  );
   const [bomNote, setBomNote] = useState("");
   const [notes, setNotes] = useState("");
   const [otherCost, setOtherCost] = useState("");
@@ -34,8 +36,44 @@ export default function NewQuickPlanPage() {
   const [message, setMessage] = useState("");
   const [submittedStatus, setSubmittedStatus] = useState<"draft" | "completed" | null>(null);
 
-  const selectedFinished = inventoryItems.find(item => item.id === finishedGoodItemId);
-  const finishedShort = Math.max(0, finishedGoodQty - (selectedFinished?.quantityOnHand ?? 0));
+  useEffect(() => {
+    if (finishedGoods.length === 0 && firstFinished) {
+      setFinishedGoods([{ id: makeQuickPlanId("qfg"), inventoryItemId: firstFinished.id, quantity: 1, unit: firstFinished.unit }]);
+    }
+  }, [finishedGoods.length, firstFinished]);
+
+  const primaryFinishedLine = finishedGoods[0];
+  const selectedFinished = finishedItems.find(item => item.id === primaryFinishedLine?.inventoryItemId);
+  const finishedGoodItemId = primaryFinishedLine?.inventoryItemId ?? "";
+  const finishedGoodQty = primaryFinishedLine?.quantity ?? 1;
+  const finishedShort = Math.max(0, convertQuantityForInventory(finishedGoodQty, primaryFinishedLine?.unit, selectedFinished?.unit ?? "pcs") - (selectedFinished?.quantityOnHand ?? 0));
+  const setFinishedGoodItemId = (itemId: string) => {
+    const selectedItem = finishedItems.find(item => item.id === itemId);
+    if (!selectedItem) return;
+    if (primaryFinishedLine) {
+      updateFinishedGood(primaryFinishedLine.id, { inventoryItemId: itemId, unit: selectedItem.unit });
+      return;
+    }
+    setFinishedGoods([{ id: makeQuickPlanId("qfg"), inventoryItemId: itemId, quantity: 1, unit: selectedItem.unit }]);
+  };
+  const setFinishedGoodQty = (quantity: number) => {
+    if (!primaryFinishedLine) return;
+    updateFinishedGood(primaryFinishedLine.id, { quantity });
+  };
+
+  const addFinishedGood = () => {
+    const item = finishedItems[0];
+    if (!item) return;
+    setFinishedGoods(prev => [...prev, { id: makeQuickPlanId("qfg"), inventoryItemId: item.id, quantity: 1, unit: item.unit }]);
+  };
+
+  const updateFinishedGood = (id: string, updates: Partial<FinishedGoodDraft>) => {
+    setFinishedGoods(prev => prev.map(line => line.id === id ? { ...line, ...updates } : line));
+  };
+
+  const removeFinishedGood = (id: string) => {
+    setFinishedGoods(prev => prev.filter(line => line.id !== id));
+  };
 
   const addMaterial = () => {
     const item = materialItems[0];
@@ -57,15 +95,16 @@ export default function NewQuickPlanPage() {
     title: title.trim() || "Quick plan",
     purpose,
     reference: reference.trim() || undefined,
-    finishedGoodItemId,
-    finishedGoodQty,
-    finishedGoodUnit: selectedFinished?.unit ?? "pcs",
     bomNote: bomNote.trim() || undefined,
     materials,
     otherCost: otherCost === "" ? undefined : Number(otherCost) || 0,
     notes: notes.trim() || undefined,
     createdAt: new Date().toISOString(),
-    completedAt: status === "completed" ? new Date().toISOString() : undefined
+    completedAt: status === "completed" ? new Date().toISOString() : undefined,
+    finishedGoods,
+    finishedGoodItemId: finishedGoods[0]?.inventoryItemId,
+    finishedGoodQty: finishedGoods[0]?.quantity,
+    finishedGoodUnit: finishedGoods[0]?.unit
   });
 
   const persistPlan = (plan: QuickPlan) => {
@@ -74,8 +113,8 @@ export default function NewQuickPlanPage() {
 
   const saveDraft = () => {
     if (submittedStatus) return;
-    if (!selectedFinished) {
-      setMessage("Select a finished good first.");
+    if (!hasFinishedGoods()) {
+      setMessage("Add at least one finished good first.");
       return;
     }
     const plan = buildPlan("draft");
@@ -87,31 +126,30 @@ export default function NewQuickPlanPage() {
 
   const completePlan = () => {
     if (submittedStatus) return;
-    if (!selectedFinished) {
-      setMessage("Select a finished good first.");
-      return;
-    }
-    if (finishedShort > 0) {
-      setMessage(`Finished goods short by ${finishedShort} ${selectedFinished.unit}.`);
+    if (!hasFinishedGoods()) {
+      setMessage("Add at least one finished good first.");
       return;
     }
 
-    const materialShortage = materials
-      .map((line) => {
-        const item = inventoryItems.find(entry => entry.id === line.inventoryItemId);
-        if (!item) return null;
-        const quantity = convertQuantityForInventory(line.quantity, line.unit, item.unit);
-        return quantity > item.quantityOnHand ? `${item.name} short by ${quantity - item.quantityOnHand} ${item.unit}` : null;
-      })
-      .find(Boolean);
+    const finishedShortage = findShortage(finishedGoods);
+    if (finishedShortage) {
+      setMessage(finishedShortage);
+      return;
+    }
 
+    const materialShortage = findShortage(materials);
     if (materialShortage) {
       setMessage(materialShortage);
       return;
     }
 
     const plan = buildPlan("completed");
-    deductItem(selectedFinished, finishedGoodQty, selectedFinished.unit, `Quick plan finished goods out${reference ? ` ${reference}` : ""}`, plan.id);
+    finishedGoods.forEach(line => {
+      const item = inventoryItems.find(entry => entry.id === line.inventoryItemId);
+      if (!item) return;
+      const quantity = convertQuantityForInventory(line.quantity, line.unit, item.unit);
+      deductItem(item, quantity, item.unit, `Quick plan finished goods out${reference ? ` ${reference}` : ""}`, plan.id);
+    });
 
     materials.forEach(line => {
       const item = inventoryItems.find(entry => entry.id === line.inventoryItemId);
@@ -124,6 +162,27 @@ export default function NewQuickPlanPage() {
     addActivityLog({ actorName: "Admin", action: `Quick plan completed: ${plan.title}`, entityType: "quick_plan", entityId: plan.id });
     setSubmittedStatus("completed");
     setMessage("Quick plan completed. Finished goods and selected materials were deducted once.");
+  };
+
+  const hasFinishedGoods = () => finishedGoods.some(line => line.inventoryItemId && line.quantity > 0);
+
+  const findShortage = (lines: Array<{ inventoryItemId: string; quantity: number; unit: InventoryUnit }>) => {
+    const totals = new Map<string, number>();
+    lines.forEach((line) => {
+      const item = inventoryItems.find(entry => entry.id === line.inventoryItemId);
+      if (!item || line.quantity <= 0) return;
+      const quantity = convertQuantityForInventory(line.quantity, line.unit, item.unit);
+      totals.set(item.id, (totals.get(item.id) ?? 0) + quantity);
+    });
+
+    for (const [itemId, quantity] of totals) {
+      const item = inventoryItems.find(entry => entry.id === itemId);
+      if (item && quantity > item.quantityOnHand) {
+        return `${item.name} short by ${quantity - item.quantityOnHand} ${item.unit}`;
+      }
+    }
+
+    return null;
   };
 
   const deductItem = (item: InventoryItem, quantity: number, unit: InventoryUnit, reason: string, referenceId: string) => {
@@ -170,7 +229,12 @@ export default function NewQuickPlanPage() {
       </Card>
 
       <Card className="mt-3 rounded-lg border border-outline-variant/30 bg-surface-container p-3">
-        <h3 className="text-[15px] font-semibold text-white">Finished goods out</h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-[15px] font-semibold text-white">Finished goods out</h3>
+          <Button type="button" size="sm" className="h-8 px-2 text-[12px]" onClick={addFinishedGood}>
+            <Plus className="h-4 w-4" /> Good
+          </Button>
+        </div>
         <div className="mt-3 grid grid-cols-[1fr_86px] gap-2">
           <SearchableInventoryPicker
             items={finishedItems}
@@ -184,6 +248,44 @@ export default function NewQuickPlanPage() {
           Available: {selectedFinished?.quantityOnHand ?? 0} {selectedFinished?.unit ?? "unit"}
           {finishedShort > 0 ? <span className="text-error"> • Short {finishedShort}</span> : null}
         </p>
+      </Card>
+
+      <Card className="mt-3 rounded-lg border border-outline-variant/30 bg-surface-container p-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-[15px] font-semibold text-white">Extra finished goods</h3>
+        </div>
+        <div className="mt-3 space-y-2">
+          {finishedGoods.slice(1).length === 0 ? (
+            <p className="text-[12.5px] text-on-surface-variant">Tap + Good above to add more finished goods.</p>
+          ) : finishedGoods.slice(1).map((line) => {
+            const item = finishedItems.find(entry => entry.id === line.inventoryItemId);
+            const unitOptions = item ? compatibleUnitsFor(item.unit) : [line.unit];
+            const quantityInStockUnit = item ? convertQuantityForInventory(line.quantity, line.unit, item.unit) : line.quantity;
+            const shortBy = item ? Math.max(0, quantityInStockUnit - item.quantityOnHand) : 0;
+
+            return (
+              <div key={line.id} className="rounded-md border border-outline-variant/20 bg-surface-container-low p-2">
+                <SearchableInventoryPicker
+                  items={finishedItems}
+                  onChange={(itemId, selectedItem) => updateFinishedGood(line.id, { inventoryItemId: itemId, unit: selectedItem.unit })}
+                  placeholder="Search finished goods..."
+                  value={line.inventoryItemId}
+                />
+                <div className="mt-1.5 grid grid-cols-[72px_78px_40px] gap-1.5">
+                  <Input type="number" min={0} value={line.quantity} onChange={event => updateFinishedGood(line.id, { quantity: Math.max(0, Number(event.target.value) || 0) })} className="h-9 text-right text-[12px]" />
+                  <select value={line.unit} onChange={event => updateFinishedGood(line.id, { unit: event.target.value as InventoryUnit })} className="h-9 rounded-md border border-outline bg-surface-container px-1 text-[12px] text-white">
+                    {unitOptions.map(unit => <option key={unit} value={unit}>{unit}</option>)}
+                  </select>
+                  <button type="button" aria-label="Remove finished good" onClick={() => removeFinishedGood(line.id)} className="grid h-9 w-10 place-items-center rounded-md border border-outline-variant/25 text-error"><Trash2 className="h-4 w-4" /></button>
+                </div>
+                <p className="mt-1 text-[11.5px] text-on-surface-variant">
+                  Available: {item?.quantityOnHand ?? 0} {item?.unit ?? "unit"}
+                  {shortBy > 0 ? <span className="text-error"> - Short {shortBy} {item?.unit}</span> : null}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </Card>
 
       <Card className="mt-3 rounded-lg border border-outline-variant/30 bg-surface-container p-3">
