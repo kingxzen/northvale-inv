@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo } from "react";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageBackButton } from "@/components/layout/page-back-button";
 import { Card } from "@/components/ui/card";
 import { InventoryItemForm } from "@/components/forms/inventory-item-form";
 import { useApp } from "@/context/app-context";
@@ -39,6 +40,7 @@ function AddInventoryItemContent() {
 
   return (
     <>
+      <PageBackButton fallbackHref="/inventory" />
       <p className="text-label-md uppercase text-primary">Inventory</p>
       <h2 className="mt-3 text-headline-lg text-white">
         {initialItem ? `Edit item: ${initialItem.name}` : type === "asset" ? "Add asset" : "Add inventory item"}

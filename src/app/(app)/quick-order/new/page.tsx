@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageBackButton } from "@/components/layout/page-back-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,13 +19,14 @@ import {
   type PackingTemplateRecord,
   type QuickOrderRecord
 } from "@/lib/operations-store";
+import { listPackingTemplatesFromSupabase } from "@/lib/supabase/repositories/bom-packing";
 
 type Line = { id: string; productId: string; quantity: number; notes?: string };
 type Group = { id: string; templateId: string; assignedLineIds: string[]; manualSets: string; notes?: string };
 
 export default function NewQuickOrderPage() {
   const { products, inventoryItems, updateInventoryItem, addStockTransaction, addActivityLog } = useApp();
-  const finishedProducts = products.filter(product => !product.isArchived);
+  const finishedProducts = useMemo(() => products.filter(product => !product.isArchived), [products]);
   const [templates, setTemplates] = useState<PackingTemplateRecord[]>([]);
   const [platform, setPlatform] = useState("Shopee");
   const [referenceNo, setReferenceNo] = useState("");
@@ -32,16 +34,39 @@ export default function NewQuickOrderPage() {
   const [preparedBy, setPreparedBy] = useState("");
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState("");
+  const [templateLoadMessage, setTemplateLoadMessage] = useState("");
+  const [submittedOrderStatus, setSubmittedOrderStatus] = useState<"draft" | "processed" | null>(null);
   const [isProcessConfirmOpen, setIsProcessConfirmOpen] = useState(false);
   const [lines, setLines] = useState<Line[]>([{ id: makeOpId("line"), productId: "", quantity: 1 }]);
   const [groups, setGroups] = useState<Group[]>([{ id: makeOpId("group"), templateId: "", assignedLineIds: [], manualSets: "" }]);
   const [materialOverrides, setMaterialOverrides] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const activeTemplates = getPackingTemplates().filter(template => template.status === "active");
-    setTemplates(activeTemplates);
+    let active = true;
+
+    async function loadTemplates() {
+      try {
+        const supabaseTemplates = await listPackingTemplatesFromSupabase();
+        const activeTemplates = supabaseTemplates.filter(template => template.status === "active");
+        if (!active) return;
+        setTemplates(activeTemplates);
+        setTemplateLoadMessage(activeTemplates.length ? "" : "No active Supabase packing templates yet.");
+        setGroups(prev => prev.map(group => ({ ...group, templateId: group.templateId || activeTemplates[0]?.id || "", assignedLineIds: group.assignedLineIds.length ? group.assignedLineIds : lines.map(line => line.id) })));
+      } catch {
+        const localTemplates = getPackingTemplates().filter(template => template.status === "active");
+        if (!active) return;
+        setTemplates(localTemplates);
+        setTemplateLoadMessage("Packing templates loaded locally only. Check Supabase sync before processing.");
+        setGroups(prev => prev.map(group => ({ ...group, templateId: group.templateId || localTemplates[0]?.id || "", assignedLineIds: group.assignedLineIds.length ? group.assignedLineIds : lines.map(line => line.id) })));
+      }
+    }
+
     setLines(prev => prev.map((line, index) => ({ ...line, productId: line.productId || finishedProducts[index]?.id || finishedProducts[0]?.id || "" })));
-    setGroups(prev => prev.map(group => ({ ...group, templateId: group.templateId || activeTemplates[0]?.id || "", assignedLineIds: group.assignedLineIds.length ? group.assignedLineIds : lines.map(line => line.id) })));
+    void loadTemplates();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const finishedSummary = useMemo(() => lines.map(line => {
@@ -131,13 +156,16 @@ export default function NewQuickOrderPage() {
   });
 
   const saveDraft = () => {
+    if (submittedOrderStatus) return;
     const order = appendOrderLog(buildOrder("draft"), `Order ${referenceNo || "new"} saved as Draft`, preparedBy || "Admin");
     saveQuickOrders([order, ...getQuickOrders()]);
     addActivityLog({ actorName: preparedBy || "Admin", action: `Quick Order draft saved${referenceNo ? `: ${referenceNo}` : ""}`, entityType: "quick_order", entityId: order.id });
+    setSubmittedOrderStatus("draft");
     flash("Quick order saved as Draft. Inventory was not deducted.");
   };
 
   const processOrder = () => {
+    if (submittedOrderStatus) return;
     setIsProcessConfirmOpen(false);
     const actor = preparedBy || "Admin";
     const order = buildOrder("processed", true);
@@ -167,6 +195,7 @@ export default function NewQuickOrderPage() {
 
     saveQuickOrders([withLogs, ...getQuickOrders()]);
     addActivityLog({ actorName: actor, action: `Quick Order processed: ${referenceNo || order.id}`, entityType: "quick_order", entityId: order.id });
+    setSubmittedOrderStatus("processed");
     flash("Quick order processed. Finished goods and packing materials deducted once.");
   };
 
@@ -187,6 +216,7 @@ export default function NewQuickOrderPage() {
           onConfirm={processOrder}
         />
       )}
+      <PageBackButton fallbackHref="/quick-orders" />
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-label-sm uppercase text-primary">Packing</p>
@@ -205,6 +235,7 @@ export default function NewQuickOrderPage() {
           <div className="col-span-2"><Field label="Notes"><Input value={notes} onChange={e => setNotes(e.target.value)} className="h-10 text-[13px]" /></Field></div>
         </div>
       </Card>
+      {templateLoadMessage && <Card className="mt-3 rounded-lg border border-warning/25 bg-warning/10 p-3 text-[12.5px] text-warning">{templateLoadMessage}</Card>}
 
       <Card className="mt-3 rounded-lg border border-outline-variant/30 bg-surface-container p-3">
         <div className="flex items-center justify-between gap-2"><SectionTitle title="Finished goods" subtitle="Deducted only when processed" /><Button size="sm" className="h-8 px-2 text-[12px]" onClick={addLine}><Plus className="h-4 w-4" /> Add</Button></div>
@@ -254,8 +285,8 @@ export default function NewQuickOrderPage() {
       <Card className="mt-3 rounded-lg border border-primary/20 bg-primary/10 p-3"><div className="flex items-center justify-between text-[13px]"><span className="text-primary">Estimated packing cost</span><strong className="text-white">{packingCost > 0 ? formatMoney(packingCost) : "Cost pending"}</strong></div></Card>
 
       <Card className="sticky bottom-20 z-30 mt-3 flex gap-2 rounded-lg border border-outline-variant/35 bg-surface-container/95 p-3 shadow-glow backdrop-blur-md">
-        <Button type="button" className="h-10 flex-1" onClick={saveDraft}><Save className="h-4 w-4" /> Save Draft</Button>
-        <Button type="button" className="h-10 flex-1" onClick={() => setIsProcessConfirmOpen(true)}>Process/Packed</Button>
+        <Button type="button" className="h-10 flex-1" onClick={saveDraft} disabled={!!submittedOrderStatus}><Save className="h-4 w-4" /> {submittedOrderStatus === "draft" ? "Saved" : "Save Draft"}</Button>
+        <Button type="button" className="h-10 flex-1" onClick={() => setIsProcessConfirmOpen(true)} disabled={!!submittedOrderStatus}>{submittedOrderStatus === "processed" ? "Processed" : "Process/Packed"}</Button>
       </Card>
     </AppShell>
   );

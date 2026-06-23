@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState, useMemo } from "react";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageBackButton } from "@/components/layout/page-back-button";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/forms/field";
@@ -12,7 +13,7 @@ import { useApp } from "@/context/app-context";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { stockMovementSchema, type StockMovementInput } from "@/lib/validation";
-import { ArrowLeft, Save, TrendingUp, TrendingDown, TriangleAlert } from "lucide-react";
+import { Save, TrendingUp, TrendingDown, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function StockMovementContent() {
@@ -143,9 +144,7 @@ function StockMovementContent() {
 
       {/* Top Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <PageBackButton fallbackHref="/inventory" className="h-9 px-2" />
         <h2 className="text-headline-md font-bold text-primary">Stock movement</h2>
       </div>
 

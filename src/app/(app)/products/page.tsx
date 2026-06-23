@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageBackButton } from "@/components/layout/page-back-button";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -271,6 +272,7 @@ export default function ProductsPage() {
       )}
 
       {/* Header */}
+      <PageBackButton fallbackHref="/inventory" />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-headline-md font-bold text-white">Products & BOMs</h2>

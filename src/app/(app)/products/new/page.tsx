@@ -3,11 +3,12 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageBackButton } from "@/components/layout/page-back-button";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ArrowRight, Save, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Save, Plus, Trash2 } from "lucide-react";
 import { useApp } from "@/context/app-context";
 import { cn } from "@/lib/utils";
 
@@ -85,7 +86,7 @@ export default function NewProductPage() {
 
     setSuccessMessage("Product and BOM configuration saved successfully!");
     setTimeout(() => {
-      router.push("/production");
+      router.push("/products");
     }, 1500);
   };
 
@@ -100,9 +101,7 @@ export default function NewProductPage() {
 
       {/* Top Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <PageBackButton fallbackHref="/products" className="h-9 px-2" />
         <h2 className="text-headline-md font-bold text-primary">
           {step === 1 ? "Add product" : "Define BOM Lines"}
         </h2>
@@ -221,7 +220,7 @@ export default function NewProductPage() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button type="button" variant="ghost" className="flex-1 border border-outline-variant/30" onClick={() => router.push("/production")}>
+              <Button type="button" variant="ghost" className="flex-1 border border-outline-variant/30" onClick={() => router.push("/products")}>
                 Cancel
               </Button>
               <Button type="button" className="flex-1" onClick={() => setStep(2)}>

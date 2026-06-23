@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Archive, ArrowLeft, Copy, Edit3, Plus, Save } from "lucide-react";
+import { Archive, Copy, Edit3, Plus, Save } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageBackButton } from "@/components/layout/page-back-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -117,11 +117,7 @@ export default function PackingTemplatesPage() {
 
   return (
     <AppShell>
-      <Button asChild variant="ghost" size="icon" className="mb-3 h-9 w-9">
-        <Link href="/inventory" aria-label="Back to inventory">
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-      </Button>
+      <PageBackButton fallbackHref="/inventory" />
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-label-sm uppercase text-primary">Ecommerce</p>

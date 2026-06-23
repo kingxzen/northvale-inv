@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageBackButton } from "@/components/layout/page-back-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,7 @@ function inRange(value: string | undefined, start: string, end: string) {
 }
 
 function orderDate(order: QuickOrderRecord) {
-  return order.completedAt ?? order.processedAt ?? order.packedAt ?? order.createdAt;
+  return order.processedAt ?? order.packedAt ?? order.completedAt ?? order.createdAt;
 }
 
 export default function QuickOrdersPage() {
@@ -158,6 +159,7 @@ export default function QuickOrdersPage() {
           onConfirm={() => pendingConfirm.type === "process" ? processConfirmed(pendingConfirm.order) : completeConfirmed(pendingConfirm.order)}
         />
       )}
+      <PageBackButton fallbackHref="/inventory" />
       <p className="text-label-sm uppercase text-primary">Ecommerce</p>
       <h2 className="mt-1 text-[32px] font-bold leading-tight text-white">Quick Order History</h2>
 

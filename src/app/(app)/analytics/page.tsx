@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
+import { PageBackButton } from "@/components/layout/page-back-button";
 import { Card } from "@/components/ui/card";
 import { useApp } from "@/context/app-context";
 import { cn, formatMoney } from "@/lib/utils";
@@ -231,6 +232,7 @@ export default function AnalyticsPage() {
 
   return (
     <AppShell>
+      <PageBackButton fallbackHref="/inventory" />
       <p className="text-label-sm uppercase text-primary">Cost center</p>
       <h2 className="mt-1 text-[32px] font-bold leading-tight text-white">Analytics</h2>
 

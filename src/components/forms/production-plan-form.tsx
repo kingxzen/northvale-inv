@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useApp } from "@/context/app-context";
 import { formatMoney, cn } from "@/lib/utils";
+import { convertQuantityForInventory } from "@/lib/units";
 import type { Product, ProductBomLine, InventoryItem, ProductionStatus } from "@/types/domain";
 
 function ProductLineRow({
@@ -154,6 +155,7 @@ export function ProductionPlanForm({ products, bomLines, inventoryItems }: Produ
   const { addProductionJob } = useApp();
   
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [preparedDate, setPreparedDate] = useState(() => toDateTimeLocal(new Date().toISOString()));
   const [dueDate, setDueDate] = useState("");
   const [purpose, setPurpose] = useState<"stock" | "order" | "custom">("stock");
@@ -219,14 +221,15 @@ export function ProductionPlanForm({ products, bomLines, inventoryItems }: Produ
       const prodBoms = bomLines.filter(b => b.productId === line.productId);
       prodBoms.forEach(bom => {
         if (!bom.inventoryItemId) return;
+        const item = activeItems.find(i => i.id === bom.inventoryItemId);
         const requiredQty = bom.quantityPerBatch * line.plannedBatchQty;
         const wastageMult = bom.wastagePercent ? (1 + bom.wastagePercent / 100) : 1;
-        const finalQty = requiredQty * wastageMult;
+        const finalQty = item ? convertQuantityForInventory(requiredQty * wastageMult, bom.unit, item.unit) : requiredQty * wastageMult;
 
         if (!map[bom.inventoryItemId]) {
           map[bom.inventoryItemId] = {
             required: 0,
-            unit: bom.unit || "kg",
+            unit: item?.unit ?? bom.unit ?? "kg",
             lineType: bom.lineType,
             costOverrides: []
           };
@@ -325,7 +328,9 @@ export function ProductionPlanForm({ products, bomLines, inventoryItems }: Produ
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (productLines.length === 0) return;
+    setIsSubmitting(true);
     
     // Save the plan as a single ProductionJob in the AppContext
     addProductionJob({
@@ -553,9 +558,9 @@ export function ProductionPlanForm({ products, bomLines, inventoryItems }: Produ
             >
               Cancel
             </Button>
-            <Button className="h-11 flex-1" type="submit">
+            <Button className="h-11 flex-1" type="submit" disabled={isSubmitting}>
               <CalendarPlus className="h-5 w-5 mr-1" />
-              Save Draft
+              {isSubmitting ? "Saving..." : "Save Draft"}
             </Button>
           </div>
         </Card>

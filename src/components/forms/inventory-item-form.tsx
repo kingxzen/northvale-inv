@@ -21,6 +21,7 @@ export function InventoryItemForm({ locations, initialItem }: InventoryItemFormP
   const router = useRouter();
   const { addInventoryItem, updateInventoryItem } = useApp();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const form = useForm<InventoryItemInput>({
     resolver: zodResolver(inventoryItemSchema),
@@ -37,6 +38,8 @@ export function InventoryItemForm({ locations, initialItem }: InventoryItemFormP
   });
 
   const onSubmit = (data: InventoryItemInput) => {
+    if (hasSubmitted) return;
+    setHasSubmitted(true);
     const cost = data.unitCost !== "" && data.unitCost !== undefined ? Number(data.unitCost) : undefined;
     
     if (initialItem) {
@@ -139,9 +142,9 @@ export function InventoryItemForm({ locations, initialItem }: InventoryItemFormP
           >
             Cancel
           </Button>
-          <Button className="flex-1" type="submit">
+          <Button className="flex-1" type="submit" disabled={hasSubmitted}>
             <Save className="h-5 w-5" />
-            {initialItem ? "Save changes" : "Save item"}
+            {hasSubmitted ? "Saving..." : initialItem ? "Save changes" : "Save item"}
           </Button>
         </div>
       </form>
