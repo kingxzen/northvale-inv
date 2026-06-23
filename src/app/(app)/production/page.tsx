@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
-import { Plus } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { ClipboardList, FilePlus2, Plus } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { ProductionCard } from "@/components/data/production-card";
 import { useApp } from "@/context/app-context";
+import { getProductionTasks } from "@/lib/production-tasks";
 import { cn } from "@/lib/utils";
 
 export default function ProductionPage() {
@@ -14,6 +15,11 @@ export default function ProductionPage() {
 
   const [activeFilter, setActiveFilter] = useState("All");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [openTaskCount, setOpenTaskCount] = useState(0);
+
+  useEffect(() => {
+    setOpenTaskCount(getProductionTasks().filter((task) => task.status === "todo").length);
+  }, []);
 
   const activeJobs = useMemo(() => productionJobs.filter((job) => !job.isArchived), [productionJobs]);
 
@@ -62,6 +68,21 @@ export default function ProductionPage() {
         <SummaryStat label="Draft" value={drafts} className="text-primary" />
         <SummaryStat label="To Process" value={toProcess} className="text-secondary" />
         <SummaryStat label="Done" value={completed} className="text-success" />
+      </section>
+
+      <section className="mt-3 grid grid-cols-2 gap-2">
+        <Button asChild variant="secondary" className="h-11 justify-start rounded-lg border border-outline-variant/30 bg-surface-container px-3 text-[13px]">
+          <Link href="/production/tasks">
+            <ClipboardList className="h-4 w-4 text-primary" />
+            Tasks{openTaskCount > 0 ? ` (${openTaskCount})` : ""}
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" className="h-11 justify-start rounded-lg border border-outline-variant/30 bg-surface-container px-3 text-[13px]">
+          <Link href="/quick-plan/new">
+            <FilePlus2 className="h-4 w-4 text-primary" />
+            Quick plan
+          </Link>
+        </Button>
       </section>
 
       {/* Tabs / Filter Controls */}

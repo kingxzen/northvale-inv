@@ -1,6 +1,6 @@
 "use client";
 
-import { Boxes, CircleSlash, Clock3, FlaskConical, PackageSearch } from "lucide-react";
+import { Boxes, CheckCircle2, CircleSlash, Clock3, FlaskConical, PackageMinus, PackageSearch } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,12 @@ import { Progress } from "@/components/ui/progress";
 import { useApp } from "@/context/app-context";
 import { formatMoney } from "@/lib/utils";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function DashboardPage() {
   const { inventoryItems, locations, productionJobs, stockTransactions, activityLogs } = useApp();
+  const todayKey = getDateKey(new Date());
+  const [checkInAnswer, setCheckInAnswer] = useState<"yes" | "no" | null>(null);
 
   const activeItems = useMemo(() => inventoryItems.filter(item => !item.isArchived), [inventoryItems]);
   const criticalItems = useMemo(() => activeItems.filter((item) => item.status === "critical"), [activeItems]);
@@ -34,6 +36,22 @@ export default function DashboardPage() {
       return sum + Number(txn.quantity || 0) * (item?.unitCost ?? 0);
     }, 0);
   }, [inventoryItems, stockTransactions]);
+  const inventoryUpdatedToday = useMemo(() => (
+    stockTransactions.some((txn) => getDateKey(new Date(txn.createdAt)) === todayKey)
+    || activityLogs.some((log) => log.entityType === "inventory_item" && getDateKey(new Date(log.createdAt)) === todayKey)
+  ), [activityLogs, stockTransactions, todayKey]);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(`northvale_inventory_checkin_${todayKey}`);
+    if (stored === "yes" || stored === "no") {
+      setCheckInAnswer(stored);
+    }
+  }, [todayKey]);
+
+  const answerCheckIn = (answer: "yes" | "no") => {
+    window.localStorage.setItem(`northvale_inventory_checkin_${todayKey}`, answer);
+    setCheckInAnswer(answer);
+  };
 
   return (
     <AppShell>
@@ -42,6 +60,21 @@ export default function DashboardPage() {
         <p className="min-w-0 truncate">
           Last update: {latestLog ? `${latestLog.action} • ${latestLog.actorName} • ${formatRelativeTime(latestLog.createdAt)}` : "No setup actions yet"}
         </p>
+      </section>
+
+      <section className="mb-3 grid grid-cols-2 gap-2">
+        <Button asChild variant="secondary" className="h-11 justify-start rounded-lg border border-outline-variant/30 bg-surface-container px-3 text-[13px]">
+          <Link href="/quick-plan/new">
+            <PackageMinus className="h-4 w-4 text-primary" />
+            Quick plan
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" className="h-11 justify-start rounded-lg border border-outline-variant/30 bg-surface-container px-3 text-[13px]">
+          <Link href="/production/tasks">
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+            Tasks
+          </Link>
+        </Button>
       </section>
 
       <section className="rounded-lg border border-primary/20 bg-hero-card p-6 shadow-card">
@@ -115,8 +148,38 @@ export default function DashboardPage() {
           </div>
         </div>
       </Card>
+
+      {!inventoryUpdatedToday && (
+        <Card className="mt-4 rounded-lg border border-outline-variant/25 bg-surface-container p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-navy text-primary">
+              <Clock3 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-[15px] font-semibold text-white">No inventory update today</h3>
+              <p className="mt-1 text-[12.5px] leading-5 text-on-surface-variant">
+                Were you able to manage or check inventory today?
+              </p>
+              {checkInAnswer ? (
+                <p className="mt-3 rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-[12.5px] text-primary">
+                  Marked {checkInAnswer === "yes" ? "checked today" : "not updated today"}.
+                </p>
+              ) : (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Button type="button" className="h-9" onClick={() => answerCheckIn("yes")}>Yes</Button>
+                  <Button type="button" variant="secondary" className="h-9 border border-outline-variant/30" onClick={() => answerCheckIn("no")}>No</Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
     </AppShell>
   );
+}
+
+function getDateKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function formatRelativeTime(value: string) {
