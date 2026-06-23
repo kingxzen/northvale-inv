@@ -165,6 +165,21 @@ export function BottomNav() {
             </Link>
 
             <Link
+              href="/inventory/bulk-stock-in"
+              onClick={closeSheet}
+              className="flex items-start gap-4 p-4 rounded-2xl bg-surface-container/50 border border-outline-variant/10 hover:bg-surface-container-highest/50 active:scale-[0.98] transition text-left group"
+            >
+            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-secondary-container/20 flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition">
+              <ArrowDownToLine className="h-6 w-6" />
+            </div>
+            <div className="flex-grow pt-0.5">
+              <p className="text-label-md text-on-surface">Bulk Stock In</p>
+              <p className="text-body-sm text-on-surface-variant mt-0.5 font-normal">Multiple received items with shared shipping fee</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-outline self-center opacity-0 group-hover:opacity-100 transition" />
+            </Link>
+
+            <Link
               href="/inventory/stock-movement?type=out"
               onClick={closeSheet}
               className="flex items-start gap-4 p-4 rounded-2xl bg-surface-container/50 border border-outline-variant/10 hover:bg-surface-container-highest/50 active:scale-[0.98] transition text-left group"

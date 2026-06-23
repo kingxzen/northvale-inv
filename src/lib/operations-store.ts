@@ -67,10 +67,20 @@ export type QuickOrderRecord = {
   inventoryDeducted?: boolean;
 };
 
+export type LogisticsExpenseRecord = {
+  id: string;
+  source: "bulk_stock_in" | "quick_order" | "manual";
+  amount: number;
+  reference?: string;
+  notes?: string;
+  createdAt: string;
+};
+
 const BOM_KEY = "prodstock_master_boms";
 const ASSIGN_KEY = "prodstock_product_bom_assignments";
 const TEMPLATE_KEY = "prodstock_packing_templates";
 const QUICK_ORDER_KEY = "prodstock_quick_orders";
+const LOGISTICS_EXPENSE_KEY = "prodstock_logistics_expenses";
 const DEMO_DATA_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO_DATA === "true";
 
 export const defaultMasterBoms: MasterBom[] = [
@@ -163,6 +173,14 @@ export function getQuickOrders() {
 
 export function saveQuickOrders(orders: QuickOrderRecord[]) {
   writeJson(QUICK_ORDER_KEY, orders);
+}
+
+export function getLogisticsExpenses() {
+  return readJson<LogisticsExpenseRecord[]>(LOGISTICS_EXPENSE_KEY, []);
+}
+
+export function saveLogisticsExpenses(expenses: LogisticsExpenseRecord[]) {
+  writeJson(LOGISTICS_EXPENSE_KEY, expenses);
 }
 
 export function makeOpId(prefix: string) {

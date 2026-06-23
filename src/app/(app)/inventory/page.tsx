@@ -203,6 +203,12 @@ export default function InventoryPage() {
       </div>
 
       <div className="mt-2 grid grid-cols-2 gap-2">
+        <Button size="sm" variant="ghost" asChild className="h-8 gap-1.5 border border-outline-variant/25 px-2 text-[11.5px]">
+          <Link href="/inventory/bulk-stock-in">
+            <Plus className="h-3.5 w-3.5" />
+            Bulk stock in
+          </Link>
+        </Button>
         <Button size="sm" variant="ghost" className="h-8 gap-1.5 border border-outline-variant/25 px-2 text-[11.5px]" onClick={handleExportInventory}>
           <Download className="h-3.5 w-3.5" />
           Export

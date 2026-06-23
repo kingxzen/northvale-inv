@@ -32,13 +32,16 @@ import {
 } from "@/lib/supabase/repositories/inventory";
 import {
   getMasterBoms,
+  getLogisticsExpenses,
   getPackingTemplates,
   getProductBomAssignments,
   getQuickOrders,
+  saveLogisticsExpenses,
   saveMasterBoms,
   savePackingTemplates,
   saveProductBomAssignments,
-  saveQuickOrders
+  saveQuickOrders,
+  type LogisticsExpenseRecord
 } from "@/lib/operations-store";
 import { restoreBomPackingToSupabase } from "@/lib/supabase/repositories/bom-packing";
 import { runFreshStartReset, type FreshStartResult } from "@/lib/fresh-start";
@@ -58,6 +61,7 @@ export type BackupRestorePayload = {
     quickOrders?: unknown[];
     stockTransactions?: StockTransaction[];
     activityLogs?: ActivityLog[];
+    logisticsExpenses?: LogisticsExpenseRecord[];
   };
 };
 
@@ -441,7 +445,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       sku: newSku,
       name: newName,
       quantityOnHand: 0,
-      status: original.category === "asset" ? "active" : "critical",
+      status: original.category === "asset" ? "active" : helperCalculateStatus(0, original.reorderPoint),
       isArchived: false
     };
     
@@ -547,6 +551,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const backupQuickOrders = data.quickOrders ?? [];
     const backupTransactions = data.stockTransactions ?? [];
     const backupLogs = data.activityLogs ?? [];
+    const backupLogisticsExpenses = data.logisticsExpenses ?? [];
     const fullMode = mode === "full-after-fresh-start";
 
     const inventorySummary = isSupabaseConfigured()
@@ -572,6 +577,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const nextQuickOrders = fullMode ? backupQuickOrders : mergeMissingRecords(getQuickOrders(), backupQuickOrders);
     const nextTransactions = fullMode ? backupTransactions : mergeMissingRecords(stockTransactions, backupTransactions);
     const nextLogsBase = fullMode ? backupLogs : mergeMissingRecords(activityLogs, backupLogs);
+    const nextLogisticsExpenses = fullMode
+      ? backupLogisticsExpenses
+      : mergeMissingRecords(getLogisticsExpenses(), backupLogisticsExpenses);
     const restoreLog: ActivityLog = {
       id: `act-${Math.random().toString(36).substring(2, 9)}`,
       actorName: "Admin",
@@ -593,6 +601,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     saveProductBomAssignments(nextAssignments as ReturnType<typeof getProductBomAssignments>);
     savePackingTemplates(nextPacking as ReturnType<typeof getPackingTemplates>);
     saveQuickOrders(nextQuickOrders as ReturnType<typeof getQuickOrders>);
+    saveLogisticsExpenses(nextLogisticsExpenses);
     localStorage.setItem("prodstock_products", JSON.stringify(nextProducts));
     localStorage.setItem("prodstock_bom", JSON.stringify(nextBomLines));
     localStorage.setItem("prodstock_jobs", JSON.stringify(nextProduction));

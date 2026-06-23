@@ -13,6 +13,7 @@ import { useApp, type BackupRestorePayload, type BackupRestoreSummary, type Rest
 import { formatMoney } from "@/lib/utils";
 import {
   getMasterBoms,
+  getLogisticsExpenses,
   getPackingTemplates,
   getProductBomAssignments,
   getQuickOrders
@@ -66,6 +67,7 @@ type FullBackup = {
     quickOrders: unknown[];
     stockTransactions: unknown[];
     activityLogs: unknown[];
+    logisticsExpenses: unknown[];
     analyticsSource: Record<string, unknown>;
   };
 };
@@ -120,7 +122,7 @@ export default function ReportsPage() {
   const dataSource = supabaseConnected ? "Supabase" : "Local only";
 
   const lowStock = useMemo(() => 
-    inventoryItems.filter((item) => !item.isArchived && (item.status === "critical" || item.status === "low")),
+    inventoryItems.filter((item) => !item.isArchived && item.reorderPoint > 0 && (item.status === "critical" || item.status === "low")),
     [inventoryItems]
   );
 
@@ -170,7 +172,56 @@ export default function ReportsPage() {
       chartData[dayIndex].cost += otherExpense;
     });
 
+    getLogisticsExpenses().forEach((expense) => {
+      const created = new Date(expense.createdAt);
+      if (created < start || created > end) return;
+      const amount = Number(expense.amount || 0);
+      totals.other += amount;
+      totals.total += amount;
+      const dayIndex = Math.max(0, Math.min(6, (created.getDay() + 6) % 7));
+      chartData[dayIndex].cost += amount;
+    });
+
     return { ...totals, chartData };
+  }, [activeFilter, inventoryItems, stockTransactions]);
+
+  const weeklyStockInReport = useMemo(() => {
+    const now = new Date();
+    const start = activeFilter === "week"
+      ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7))
+      : new Date(now.getFullYear(), now.getMonth(), 1);
+    start.setHours(0, 0, 0, 0);
+    const end = activeFilter === "week"
+      ? new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6, 23, 59, 59, 999)
+      : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const rows = new Map<string, { id: string; name: string; category: string; quantity: number; unit: string; current: number; reorderPoint: number; status: string; value: number }>();
+
+    stockTransactions.forEach((txn) => {
+      const created = new Date(txn.createdAt);
+      if (created < start || created > end || txn.type !== "stock_in") return;
+      const item = inventoryItems.find((entry) => entry.id === txn.inventoryItemId);
+      if (!item || item.isArchived) return;
+      const current = rows.get(item.id) ?? {
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        quantity: 0,
+        unit: item.unit,
+        current: item.quantityOnHand,
+        reorderPoint: item.reorderPoint,
+        status: item.status,
+        value: 0
+      };
+      current.quantity += Number(txn.quantity || 0);
+      current.value += Number(txn.quantity || 0) * (item.unitCost ?? 0);
+      rows.set(item.id, current);
+    });
+
+    return Array.from(rows.values()).sort((a, b) => {
+      const aWatch = a.reorderPoint > 0 && a.current <= a.reorderPoint * 1.2 ? 1 : 0;
+      const bWatch = b.reorderPoint > 0 && b.current <= b.reorderPoint * 1.2 ? 1 : 0;
+      return bWatch - aWatch || b.value - a.value || b.quantity - a.quantity;
+    }).slice(0, 10);
   }, [activeFilter, inventoryItems, stockTransactions]);
 
   const consumptionReport = useMemo(() => {
@@ -241,10 +292,12 @@ export default function ReportsPage() {
         quickOrders,
         stockTransactions,
         activityLogs,
+        logisticsExpenses: getLogisticsExpenses(),
         analyticsSource: {
           stockTransactions,
           productionPlans: productionJobs,
           quickOrders,
+          logisticsExpenses: getLogisticsExpenses(),
           productBomLines
         }
       }
@@ -653,6 +706,50 @@ export default function ReportsPage() {
       </Card>
 
       <Card className="mt-6 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-label-md uppercase font-bold text-on-surface">Weekly stock-in watch</h3>
+            <p className="mt-1 text-[12.5px] leading-5 text-on-surface-variant">
+              Items stocked in this period, with reorder suggestions when current stock is near low level.
+            </p>
+          </div>
+          <Badge tone={weeklyStockInReport.length > 0 ? "good" : "neutral"}>{weeklyStockInReport.length}</Badge>
+        </div>
+        <div className="mt-3 space-y-2">
+          {weeklyStockInReport.length > 0 ? (
+            weeklyStockInReport.map((row) => {
+              const nearOrder = row.reorderPoint > 0 && row.current <= row.reorderPoint * 1.2;
+              const urgent = row.reorderPoint > 0 && row.current <= row.reorderPoint;
+              return (
+                <div key={row.id} className="rounded-md border border-outline-variant/20 bg-surface-container-low px-3 py-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-semibold text-white">{row.name}</p>
+                      <p className="mt-0.5 text-[11.5px] capitalize text-on-surface-variant">
+                        Stocked in {roundReportQty(row.quantity)} {row.unit} {"\u2022"} Current {roundReportQty(row.current)} {row.unit}
+                      </p>
+                    </div>
+                    <Badge tone={urgent ? "critical" : nearOrder ? "low" : "good"}>
+                      {urgent ? "Order now" : nearOrder ? "Near low" : "OK"}
+                    </Badge>
+                  </div>
+                  {nearOrder && (
+                    <p className="mt-2 rounded-md border border-warning/25 bg-warning/10 px-2 py-1.5 text-[11.5px] leading-5 text-warning">
+                      Suggested reorder: this item was stocked in this period and is near or below reorder level.
+                    </p>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <p className="rounded-md border border-outline-variant/20 bg-surface-container-low px-3 py-4 text-center text-[13px] text-on-surface-variant">
+              No stock-in records in this range.
+            </p>
+          )}
+        </div>
+      </Card>
+
+      <Card className="mt-6 p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-label-md uppercase font-bold text-on-surface">Low stock report</h3>
           <Badge tone="critical">{lowStock.length} alerts</Badge>
@@ -970,6 +1067,7 @@ function normalizeBackupFile(parsed: unknown): FullBackup | null {
       quickOrders: Array.isArray(data.quickOrders) ? data.quickOrders : [],
       stockTransactions: Array.isArray(data.stockTransactions) ? data.stockTransactions : [],
       activityLogs: Array.isArray(data.activityLogs) ? data.activityLogs : [],
+      logisticsExpenses: Array.isArray(data.logisticsExpenses) ? data.logisticsExpenses : [],
       analyticsSource: data.analyticsSource && typeof data.analyticsSource === "object" && !Array.isArray(data.analyticsSource)
         ? data.analyticsSource as Record<string, unknown>
         : {}
