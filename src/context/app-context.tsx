@@ -8,7 +8,8 @@ import type {
   ProductionJob,
   StockTransaction,
   ActivityLog,
-  Location
+  Location,
+  InventoryUnit
 } from "@/types/domain";
 import {
   inventoryItems as initialInventoryItems,
@@ -41,6 +42,7 @@ import {
 } from "@/lib/operations-store";
 import { restoreBomPackingToSupabase } from "@/lib/supabase/repositories/bom-packing";
 import { runFreshStartReset, type FreshStartResult } from "@/lib/fresh-start";
+import { convertQuantityForInventory } from "@/lib/units";
 
 export type RestoreMode = "safe-merge" | "full-after-fresh-start";
 
@@ -877,26 +879,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ? job.productLines
       : [{ productId: job.productId, plannedBatchQty: job.plannedBatchQty }];
 
-    const requirements: Record<string, { required: number; unit: string }> = {};
+    const requirements: Record<string, { required: number; unit: InventoryUnit }> = {};
 
     productLines.forEach(line => {
       productBomLines
         .filter(bom => bom.productId === line.productId && bom.inventoryItemId)
         .forEach(bom => {
           const itemId = bom.inventoryItemId as string;
+          const item = inventoryItems.find(entry => entry.id === itemId);
+          if (!item) return;
           const wastage = bom.wastagePercent ? 1 + bom.wastagePercent / 100 : 1;
           if (!requirements[itemId]) {
-            requirements[itemId] = { required: 0, unit: bom.unit || "kg" };
+            requirements[itemId] = { required: 0, unit: item.unit };
           }
-          requirements[itemId].required += bom.quantityPerBatch * line.plannedBatchQty * wastage;
+          const lineQuantity = bom.quantityPerBatch * line.plannedBatchQty * wastage;
+          requirements[itemId].required += convertQuantityForInventory(lineQuantity, bom.unit, item.unit);
         });
     });
 
     job.additionalMaterials?.forEach(mat => {
+      const item = inventoryItems.find(entry => entry.id === mat.inventoryItemId);
+      if (!item) return;
       if (!requirements[mat.inventoryItemId]) {
-        requirements[mat.inventoryItemId] = { required: 0, unit: mat.unit };
+        requirements[mat.inventoryItemId] = { required: 0, unit: item.unit };
       }
-      requirements[mat.inventoryItemId].required += mat.quantity;
+      requirements[mat.inventoryItemId].required += convertQuantityForInventory(mat.quantity, mat.unit, item.unit);
     });
 
     return Object.entries(requirements).map(([itemId, data]) => ({

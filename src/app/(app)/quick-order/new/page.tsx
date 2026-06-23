@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useApp } from "@/context/app-context";
 import { cn, formatMoney } from "@/lib/utils";
+import { convertQuantityForInventory } from "@/lib/units";
 import {
   appendOrderLog,
   getPackingTemplates,
@@ -71,8 +72,9 @@ export default function NewQuickOrderPage() {
         if (!stock) return;
         const required = material.usageRule === "per_order" ? material.qty : material.usageRule === "per_item" ? material.qty * assignedQty : material.qty * sets;
         if (required <= 0) return;
+        const requiredInStockUnit = convertQuantityForInventory(required, material.unit, stock.unit);
         const existing = summary.get(stock.id) ?? { name: stock.name, inventoryItemId: stock.id, required: 0, unit: stock.unit, available: stock.quantityOnHand, short: 0, cost: 0 };
-        existing.required += required;
+        existing.required += requiredInStockUnit;
         existing.short = Math.max(0, existing.required - existing.available);
         existing.cost = existing.required * (stock.unitCost ?? 0);
         summary.set(stock.id, existing);

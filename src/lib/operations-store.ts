@@ -1,4 +1,5 @@
 import type { InventoryItem, InventoryUnit, ProductBomLine } from "@/types/domain";
+import { convertQuantityForInventory } from "@/lib/units";
 
 export type MasterBomLine = {
   id: string;
@@ -176,7 +177,8 @@ export function estimateBomCost(lines: MasterBomLine[], inventoryItems: Inventor
     }
     const item = inventoryItems.find(entry => entry.id === line.inventoryItemId);
     if (typeof item?.unitCost !== "number") missingCost = true;
-    return sum + (item?.unitCost ?? 0) * line.quantityPerBatch;
+    const quantity = item ? convertQuantityForInventory(line.quantityPerBatch, line.unit, item.unit) : line.quantityPerBatch;
+    return sum + (item?.unitCost ?? 0) * quantity;
   }, 0);
   return { total, missingCost };
 }
@@ -186,7 +188,8 @@ export function estimatePackingTemplateCost(templateRecord: PackingTemplateRecor
   const total = templateRecord.materials.reduce((sum, line) => {
     const item = inventoryItems.find(entry => entry.id === line.inventoryItemId && entry.category === "packaging");
     if (typeof item?.unitCost !== "number") missingCost = true;
-    return sum + (item?.unitCost ?? 0) * line.qty;
+    const quantity = item ? convertQuantityForInventory(line.qty, line.unit, item.unit) : line.qty;
+    return sum + (item?.unitCost ?? 0) * quantity;
   }, 0);
   return { total, missingCost };
 }

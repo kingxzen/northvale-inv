@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Copy, Edit3, Plus, Save } from "lucide-react";
+import Link from "next/link";
+import { Archive, ArrowLeft, Copy, Edit3, Plus, Save } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SearchableInventoryPicker } from "@/components/ui/searchable-inventory-picker";
 import { useApp } from "@/context/app-context";
+import { compatibleUnitsFor, toInventoryUnit } from "@/lib/units";
 import { cn, formatMoney } from "@/lib/utils";
 import {
   estimateBomCost,
@@ -124,6 +127,11 @@ export default function BomLibraryPage() {
 
   return (
     <AppShell>
+      <Button asChild variant="ghost" size="icon" className="mb-3 h-9 w-9">
+        <Link href="/inventory" aria-label="Back to inventory">
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+      </Button>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-label-sm uppercase text-primary">Manufacturing</p>
@@ -217,14 +225,14 @@ function BomEditor({
   const packagingItems = inventoryItems.filter(item => item.category === "packaging" && !item.isArchived);
 
   const addLine = (lineType: MasterBomLine["lineType"]) => {
-    const inventoryItemId = lineType === "raw_material" ? rawItems[0]?.id : lineType === "packaging" ? packagingItems[0]?.id : undefined;
+    const selectedItem = lineType === "raw_material" ? rawItems[0] : lineType === "packaging" ? packagingItems[0] : undefined;
     onChange({
       lines: [...bom.lines, {
         id: makeOpId("bom-line"),
         lineType,
-        inventoryItemId,
+        inventoryItemId: selectedItem?.id,
         quantityPerBatch: 1,
-        unit: lineType === "raw_material" ? "kg" : "pcs",
+        unit: selectedItem?.unit ?? (lineType === "raw_material" ? "kg" : "pcs"),
         costOverride: lineType === "manpower" || lineType === "other_cost" ? 0 : undefined
       }]
     });
@@ -255,20 +263,35 @@ function BomEditor({
       <div className="mt-2 space-y-2">
         {bom.lines.map(line => {
           const pickerItems = line.lineType === "raw_material" ? rawItems : line.lineType === "packaging" ? packagingItems : [];
+          const selectedItem = pickerItems.find(item => item.id === line.inventoryItemId);
+          const selectedLineUnit = toInventoryUnit(line.unit);
+          const unitOptions = selectedItem ? compatibleUnitsFor(selectedItem.unit) : units;
           return (
             <div key={line.id} className="rounded-md bg-surface-container-low p-2">
               <p className="text-[11px] font-bold uppercase text-outline">{line.lineType.replace("_", " ")}</p>
-              <div className="mt-1 grid grid-cols-[1fr_58px_64px] gap-1.5">
+              <div className="mt-1 grid grid-cols-[1fr_58px_72px] gap-1.5">
                 {pickerItems.length > 0 ? (
-                  <select value={line.inventoryItemId ?? ""} onChange={e => updateLine(line.id, { inventoryItemId: e.target.value })} className="h-9 min-w-0 rounded-md border border-outline bg-surface-container px-2 text-[12px] text-white">
-                    {pickerItems.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-                  </select>
+                  <SearchableInventoryPicker
+                    items={pickerItems}
+                    onChange={(itemId, item) => updateLine(line.id, { inventoryItemId: itemId, unit: item.unit })}
+                    placeholder={`Search ${line.lineType === "raw_material" ? "raw" : "packaging"}...`}
+                    value={line.inventoryItemId}
+                  />
                 ) : (
                   <Input value={line.notes ?? ""} onChange={e => updateLine(line.id, { notes: e.target.value })} placeholder="Cost label" className="h-9 text-[12px]" />
                 )}
                 <Input type="number" value={line.quantityPerBatch} onChange={e => updateLine(line.id, { quantityPerBatch: Number(e.target.value) || 0 })} className="h-9 text-right text-[12px]" />
-                <Input value={line.unit} onChange={e => updateLine(line.id, { unit: e.target.value })} className="h-9 text-[12px]" />
+                {selectedItem ? (
+                  <select value={selectedLineUnit ?? selectedItem.unit} onChange={e => updateLine(line.id, { unit: e.target.value })} className="h-9 rounded-md border border-outline bg-surface-container px-1 text-[12px] text-white">
+                    {unitOptions.map(unit => <option key={unit} value={unit}>{unit}</option>)}
+                  </select>
+                ) : (
+                  <Input value={line.unit} onChange={e => updateLine(line.id, { unit: e.target.value })} className="h-9 text-[12px]" />
+                )}
               </div>
+              {selectedItem && selectedLineUnit && selectedLineUnit !== selectedItem.unit && (
+                <p className="mt-1 text-[11px] text-primary">Auto-converts {selectedLineUnit} to stock unit {selectedItem.unit} when used.</p>
+              )}
               {(line.lineType === "manpower" || line.lineType === "other_cost") && (
                 <Input type="number" value={line.costOverride ?? 0} onChange={e => updateLine(line.id, { costOverride: Number(e.target.value) || 0 })} className="mt-1 h-9 text-[12px]" placeholder="Cost" />
               )}

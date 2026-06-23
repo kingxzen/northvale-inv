@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Archive, Copy, Edit3, Plus, Save } from "lucide-react";
+import Link from "next/link";
+import { Archive, ArrowLeft, Copy, Edit3, Plus, Save } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SearchableInventoryPicker } from "@/components/ui/searchable-inventory-picker";
 import { useApp } from "@/context/app-context";
+import { compatibleUnitsFor } from "@/lib/units";
 import { cn, formatMoney } from "@/lib/utils";
 import {
   estimatePackingTemplateCost,
@@ -114,6 +117,11 @@ export default function PackingTemplatesPage() {
 
   return (
     <AppShell>
+      <Button asChild variant="ghost" size="icon" className="mb-3 h-9 w-9">
+        <Link href="/inventory" aria-label="Back to inventory">
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+      </Button>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-label-sm uppercase text-primary">Ecommerce</p>
@@ -229,22 +237,34 @@ function TemplateEditor({
       </div>
       <Button size="sm" variant="ghost" className="mt-3 h-8 w-full" onClick={addLine}>+ Add packaging material</Button>
       <div className="mt-2 space-y-2">
-        {template.materials.map(line => (
-          <div key={line.id} className="grid grid-cols-[1fr_58px_86px] gap-1.5 rounded-md bg-surface-container-low p-2">
-            <select value={line.inventoryItemId} onChange={e => {
-              const item = packagingItems.find(entry => entry.id === e.target.value);
-              updateLine(line.id, { inventoryItemId: e.target.value, unit: item?.unit ?? line.unit });
-            }} className="h-9 min-w-0 rounded-md border border-outline bg-surface-container px-2 text-[12px] text-white">
-              {packagingItems.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-            <Input type="number" value={line.qty} onChange={e => updateLine(line.id, { qty: Number(e.target.value) || 0 })} className="h-9 text-right text-[12px]" />
-            <select value={line.usageRule} onChange={e => updateLine(line.id, { usageRule: e.target.value as PackingTemplateRecord["materials"][number]["usageRule"] })} className="h-9 rounded-md border border-outline bg-surface-container px-1 text-[11px] text-white">
-              <option value="per_order">order</option>
-              <option value="per_item">item</option>
-              <option value="per_set">set</option>
-            </select>
-          </div>
-        ))}
+        {template.materials.map(line => {
+          const selectedItem = packagingItems.find(item => item.id === line.inventoryItemId);
+          const unitOptions = selectedItem ? compatibleUnitsFor(selectedItem.unit) : [line.unit];
+          return (
+            <div key={line.id} className="rounded-md bg-surface-container-low p-2">
+              <SearchableInventoryPicker
+                items={packagingItems}
+                onChange={(itemId, item) => updateLine(line.id, { inventoryItemId: itemId, unit: item.unit })}
+                placeholder="Search packaging..."
+                value={line.inventoryItemId}
+              />
+              <div className="mt-1.5 grid grid-cols-[64px_72px_1fr] gap-1.5">
+                <Input type="number" value={line.qty} onChange={e => updateLine(line.id, { qty: Number(e.target.value) || 0 })} className="h-9 text-right text-[12px]" />
+                <select value={line.unit} onChange={e => updateLine(line.id, { unit: e.target.value as PackingTemplateRecord["materials"][number]["unit"] })} className="h-9 rounded-md border border-outline bg-surface-container px-1 text-[12px] text-white">
+                  {unitOptions.map(unit => <option key={unit} value={unit}>{unit}</option>)}
+                </select>
+                <select value={line.usageRule} onChange={e => updateLine(line.id, { usageRule: e.target.value as PackingTemplateRecord["materials"][number]["usageRule"] })} className="h-9 rounded-md border border-outline bg-surface-container px-1 text-[11px] text-white">
+                  <option value="per_order">order</option>
+                  <option value="per_item">item</option>
+                  <option value="per_set">set</option>
+                </select>
+              </div>
+              {selectedItem && line.unit !== selectedItem.unit && (
+                <p className="mt-1 text-[11px] text-primary">Auto-converts {line.unit} to stock unit {selectedItem.unit} when deducted.</p>
+              )}
+            </div>
+          );
+        })}
       </div>
       <Button size="sm" className="mt-3 h-9 w-full" onClick={onDone} disabled={isSaving}><Save className="h-4 w-4" /> {isSaving ? "Saving..." : "Save Template"}</Button>
     </div>
