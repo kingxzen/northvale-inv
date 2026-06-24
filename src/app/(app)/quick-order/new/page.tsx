@@ -13,13 +13,12 @@ import { convertQuantityForInventory } from "@/lib/units";
 import {
   appendOrderLog,
   getPackingTemplates,
-  getQuickOrders,
   makeOpId,
-  saveQuickOrders,
   type PackingTemplateRecord,
   type QuickOrderRecord
 } from "@/lib/operations-store";
 import { listPackingTemplatesFromSupabase } from "@/lib/supabase/repositories/bom-packing";
+import { saveQuickOrderToSupabase } from "@/lib/supabase/repositories/quick-orders";
 
 type Line = { id: string; productId: string; quantity: number; notes?: string };
 type Group = { id: string; templateId: string; assignedLineIds: string[]; manualSets: string; notes?: string };
@@ -54,7 +53,7 @@ export default function NewQuickOrderPage() {
         setTemplateLoadMessage(activeTemplates.length ? "" : "No active Supabase packing templates yet.");
         setGroups(prev => prev.map(group => ({ ...group, templateId: group.templateId || activeTemplates[0]?.id || "", assignedLineIds: group.assignedLineIds.length ? group.assignedLineIds : lines.map(line => line.id) })));
       } catch {
-        const localTemplates = getPackingTemplates().filter(template => template.status === "active");
+        const localTemplates = getPackingTemplates().filter((template: any) => template.status === "active");
         if (!active) return;
         setTemplates(localTemplates);
         setTemplateLoadMessage("Packing templates loaded locally only. Check Supabase sync before processing.");
@@ -160,7 +159,7 @@ export default function NewQuickOrderPage() {
   const saveDraft = () => {
     if (submittedOrderStatus) return;
     const order = appendOrderLog(buildOrder("draft"), `Order ${referenceNo || "new"} saved as Draft`, preparedBy || "Admin");
-    saveQuickOrders([order, ...getQuickOrders()]);
+    saveQuickOrderToSupabase(order);
     addActivityLog({ actorName: preparedBy || "Admin", action: `Quick Order draft saved${referenceNo ? `: ${referenceNo}` : ""}`, entityType: "quick_order", entityId: order.id });
     setSubmittedOrderStatus("draft");
     flash("Quick order saved as Draft. Inventory was not deducted.");
@@ -195,7 +194,7 @@ export default function NewQuickOrderPage() {
       ...materialSummary.map(material => `${material.name} deducted ${roundQty(material.required)} ${material.unit}`)
     ].reduce((current, text) => appendOrderLog(current, text, actor), order);
 
-    saveQuickOrders([withLogs, ...getQuickOrders()]);
+    saveQuickOrderToSupabase(withLogs);
     addActivityLog({ actorName: actor, action: `Quick Order processed: ${referenceNo || order.id}`, entityType: "quick_order", entityId: order.id });
     setSubmittedOrderStatus("processed");
     flash("Quick order processed. Finished goods and packing materials deducted once.");

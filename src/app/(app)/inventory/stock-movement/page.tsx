@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { stockMovementSchema, type StockMovementInput } from "@/lib/validation";
 import { Save, TrendingUp, TrendingDown, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getLocalSession } from "@/lib/local-auth";
 
 function StockMovementContent() {
   const router = useRouter();
@@ -120,8 +121,9 @@ function StockMovementContent() {
     });
 
     // 3. Add Activity Audit Log
+    const actorName = getLocalSession()?.username ?? "System";
     addActivityLog({
-      actorName: "Mara Santos",
+      actorName,
       action: `Recorded stock ${data.type.replace("_", " ")} of ${qty} ${item.unit} for ${item.name}`,
       entityType: "inventory_item",
       entityId: item.id

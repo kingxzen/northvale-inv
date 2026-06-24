@@ -13,6 +13,7 @@ import { useApp } from "@/context/app-context";
 import { compatibleUnitsFor, convertQuantityForInventory } from "@/lib/units";
 import { getQuickPlans, makeQuickPlanId, saveQuickPlans, type QuickPlan, type QuickPlanFinishedGoodLine, type QuickPlanMaterial, type QuickPlanPurpose } from "@/lib/quick-plans";
 import type { InventoryItem, InventoryUnit } from "@/types/domain";
+import { getLocalSession } from "@/lib/local-auth";
 
 type MaterialDraft = QuickPlanMaterial;
 type FinishedGoodDraft = QuickPlanFinishedGoodLine;
@@ -35,6 +36,7 @@ export default function NewQuickPlanPage() {
   const [materials, setMaterials] = useState<MaterialDraft[]>([]);
   const [message, setMessage] = useState("");
   const [submittedStatus, setSubmittedStatus] = useState<"draft" | "completed" | null>(null);
+  const actorName = getLocalSession()?.username ?? "System";
 
   useEffect(() => {
     if (finishedGoods.length === 0 && firstFinished) {
@@ -119,7 +121,7 @@ export default function NewQuickPlanPage() {
     }
     const plan = buildPlan("draft");
     persistPlan(plan);
-    addActivityLog({ actorName: "Admin", action: `Quick plan draft saved: ${plan.title}`, entityType: "quick_plan", entityId: plan.id });
+    addActivityLog({ actorName, action: `Quick plan draft saved: ${plan.title}`, entityType: "quick_plan", entityId: plan.id });
     setSubmittedStatus("draft");
     setMessage("Quick plan saved as Draft. Inventory was not deducted.");
   };
@@ -159,7 +161,7 @@ export default function NewQuickPlanPage() {
     });
 
     persistPlan(plan);
-    addActivityLog({ actorName: "Admin", action: `Quick plan completed: ${plan.title}`, entityType: "quick_plan", entityId: plan.id });
+    addActivityLog({ actorName, action: `Quick plan completed: ${plan.title}`, entityType: "quick_plan", entityId: plan.id });
     setSubmittedStatus("completed");
     setMessage("Quick plan completed. Finished goods and selected materials were deducted once.");
   };

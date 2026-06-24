@@ -20,16 +20,19 @@ import {
   activityLogs as initialActivityLogs,
   locations as initialLocations
 } from "@/data/mock-data";
-import {
-  createInventoryItemInSupabase,
-  importLocalInventoryToSupabase as importInventoryBackupToSupabase,
+import { 
+  createInventoryItemInSupabase, 
+  listInventoryItemsFromSupabase, 
+  updateInventoryItemInSupabase, 
+  importLocalInventoryToSupabase as importInventoryBackupToSupabase, 
+  restoreInventoryToSupabase,
   InventorySupabaseError,
   isSupabaseConfigured,
-  listInventoryItemsFromSupabase,
-  restoreInventoryToSupabase,
-  updateInventoryItemInSupabase,
   type InventoryImportSummary
 } from "@/lib/supabase/repositories/inventory";
+import { listProductsFromSupabase, saveProductToSupabase, saveProductBomLinesToSupabase } from "@/lib/supabase/repositories/products";
+import { listProductionJobsFromSupabase, saveProductionJobToSupabase } from "@/lib/supabase/repositories/production";
+import { listActivityLogsFromSupabase, listStockTransactionsFromSupabase, saveActivityLogToSupabase, saveStockTransactionToSupabase } from "@/lib/supabase/repositories/logs";
 import {
   getMasterBoms,
   getLogisticsExpenses,
@@ -46,6 +49,7 @@ import {
 import { restoreBomPackingToSupabase } from "@/lib/supabase/repositories/bom-packing";
 import { runFreshStartReset, type FreshStartResult } from "@/lib/fresh-start";
 import { convertQuantityForInventory } from "@/lib/units";
+import { getLocalSession } from "@/lib/local-auth";
 
 export type RestoreMode = "safe-merge" | "full-after-fresh-start";
 
@@ -95,6 +99,8 @@ interface AppContextType {
   hydrated: boolean;
   inventorySource: "supabase" | "local";
   inventoryError: string | null;
+  /** ISO timestamp of the last successful Supabase inventory fetch. Null if never fetched. */
+  lastInventorySync: string | null;
   
   // Inventory actions
   addInventoryItem: (item: Omit<InventoryItem, "id" | "status">) => InventoryItem;
@@ -210,6 +216,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [locations] = useState<Location[]>(initialLocations);
   const [inventorySource, setInventorySource] = useState<"supabase" | "local">("local");
   const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [lastInventorySync, setLastInventorySync] = useState<string | null>(null);
+
+  // Derive actor name from the current local session so logs show real usernames.
+  const actorName = getLocalSession()?.username ?? "System";
 
   // Hydrate persisted data only. Mock data is demo-only and must not replace stored records.
   useEffect(() => {
@@ -232,10 +242,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (isSupabaseConfigured()) {
       try {
-        const result = await listInventoryItemsFromSupabase();
+        const [invResult, prodResult, jobsResult, txnsResult, logsResult] = await Promise.all([
+          listInventoryItemsFromSupabase().catch((e: any) => { console.error(e); return { items: [] }; }),
+          listProductsFromSupabase().catch((e: any) => { console.error(e); return { products: [], bomLines: [] }; }),
+          listProductionJobsFromSupabase().catch((e: any) => { console.error(e); return []; }),
+          listStockTransactionsFromSupabase().catch((e: any) => { console.error(e); return []; }),
+          listActivityLogsFromSupabase().catch((e: any) => { console.error(e); return []; })
+        ]);
         if (!active) return;
-        setInventoryItems(result.items);
+        
+        if (invResult.items && invResult.items.length > 0) setInventoryItems(invResult.items);
         setInventoryError(null);
+        setLastInventorySync(new Date().toISOString());
+
+        if (prodResult.products && prodResult.products.length > 0) setProducts(prodResult.products);
+        if (prodResult.bomLines && prodResult.bomLines.length > 0) setProductBomLines(prodResult.bomLines);
+        if (jobsResult && jobsResult.length > 0) setProductionJobs(jobsResult);
+        if (txnsResult && txnsResult.length > 0) setStockTransactions(txnsResult);
+        if (logsResult && logsResult.length > 0) setActivityLogs(logsResult);
       } catch (error) {
         if (!active) return;
         console.error(formatInventorySupabaseError(error));
@@ -293,6 +317,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activityLogs, hydrated]);
 
+  
+  const syncProductToSupabase = (product: Product, bomLines?: ProductBomLine[]) => {
+    if (inventorySource !== "supabase" || !isSupabaseConfigured()) return;
+    saveProductToSupabase(product).catch(console.error);
+    if (bomLines) saveProductBomLinesToSupabase(product.id, bomLines).catch(console.error);
+  };
+  const syncProductionJobToSupabase = (job: ProductionJob) => {
+    if (inventorySource !== "supabase" || !isSupabaseConfigured()) return;
+    saveProductionJobToSupabase(job).catch(console.error);
+  };
+  const syncStockTransactionToSupabase = (txn: StockTransaction) => {
+    if (inventorySource !== "supabase" || !isSupabaseConfigured()) return;
+    saveStockTransactionToSupabase(txn).catch(console.error);
+  };
+  const syncActivityLogToSupabase = (log: ActivityLog) => {
+    if (inventorySource !== "supabase" || !isSupabaseConfigured()) return;
+    saveActivityLogToSupabase(log).catch(console.error);
+  };
+
   const helperCalculateStatus = (quantity: number, reorderPoint: number): "critical" | "low" | "good" | "active" => {
     if (reorderPoint <= 0) return "active";
     if (quantity <= reorderPoint * 0.5) return "critical";
@@ -306,11 +349,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const result = await listInventoryItemsFromSupabase();
       setInventoryItems(result.items);
       setInventoryError(null);
+      setLastInventorySync(new Date().toISOString());
     } catch (error) {
       console.error(formatInventorySupabaseError(error));
       setInventoryError(formatInventorySupabaseError(error));
     }
   };
+
+  // Auto-refresh Supabase inventory when the tab regains focus.
+  // This ensures admin and user both see fresh data after switching away and back.
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshInventoryItems();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []); // Empty deps: listener registered once on mount
 
   const persistCreatedInventoryItem = (item: InventoryItem & { isArchived?: boolean }) => {
     if (inventorySource !== "supabase" || !isSupabaseConfigured()) return;
@@ -366,7 +425,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
     
     addActivityLog({
-      actorName: "Mara Santos",
+      actorName,
       action: `Created inventory item ${newItem.name} (${newItem.sku})`,
       entityType: "inventory_item",
       entityId: id
@@ -400,14 +459,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (updates.unitCost !== undefined) {
       addActivityLog({
-        actorName: "Mara Santos",
+        actorName,
         action: `Edited unit cost for item ID ${id} to ${updates.unitCost}`,
         entityType: "inventory_item",
         entityId: id
       });
     } else {
       addActivityLog({
-        actorName: "Mara Santos",
+        actorName,
         action: `Updated inventory item attributes for item ID ${id}`,
         entityType: "inventory_item",
         entityId: id
@@ -424,7 +483,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     persistUpdatedInventoryItem(id, { isArchived: true }, previousItems);
     
     addActivityLog({
-      actorName: "Mara Santos",
+      actorName,
       action: `Archived inventory item ID ${id}`,
       entityType: "inventory_item",
       entityId: id
@@ -453,7 +512,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     persistCreatedInventoryItem(duplicate);
     
     addActivityLog({
-      actorName: "Mara Santos",
+      actorName,
       action: `Duplicated item ${original.name} into ${newName}`,
       entityType: "inventory_item",
       entityId: newId
@@ -466,7 +525,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (inventorySource === "supabase") {
       archiveInventoryItem(id);
       addActivityLog({
-        actorName: "Mara Santos",
+        actorName,
         action: `Permanent delete disabled for Supabase inventory. Archived item ID ${id} instead`,
         entityType: "inventory_item",
         entityId: id
@@ -477,7 +536,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setInventoryItems(prev => prev.filter(item => item.id !== id));
     
     addActivityLog({
-      actorName: "Mara Santos",
+      actorName,
       action: `Permanently deleted inventory item ID ${id}`,
       entityType: "inventory_item",
       entityId: id
@@ -665,6 +724,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
     
     setProductBomLines(prev => [...prev, ...linesToInsert]);
+    syncProductToSupabase(newProduct, linesToInsert);
 
     addActivityLog({
       actorName: "Mara Santos",
@@ -677,6 +737,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
+    const updatedProduct = { ...products.find(p => p.id === id)!, ...updates };
+    syncProductToSupabase(updatedProduct);
     setProducts(prev => prev.map(p => {
       if (p.id === id) {
         return { ...p, ...updates };
@@ -820,6 +882,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     setProductionJobs(prev => [newJob, ...prev]);
+    syncProductionJobToSupabase(newJob);
 
     // Log product line additions
     if (newJob.productLines && newJob.productLines.length > 0) {
@@ -866,6 +929,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProductionJob = (id: string, updates: Partial<ProductionJob>) => {
+    const updatedJob = { ...productionJobs.find(job => job.id === id)!, ...updates };
+    syncProductionJobToSupabase(updatedJob);
     setProductionJobs(prev => prev.map(job => {
       if (job.id === id) {
         return {
@@ -1229,6 +1294,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date().toISOString()
     };
     setStockTransactions(prev => [newTxn, ...prev]);
+    syncStockTransactionToSupabase(newTxn);
   };
 
   // Add activity log helper
@@ -1239,6 +1305,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date().toISOString()
     };
     setActivityLogs(prev => [newLog, ...prev]);
+    syncActivityLogToSupabase(newLog);
   };
 
   return (
@@ -1254,6 +1321,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         hydrated,
         inventorySource,
         inventoryError,
+        lastInventorySync,
         addInventoryItem,
         updateInventoryItem,
         archiveInventoryItem,

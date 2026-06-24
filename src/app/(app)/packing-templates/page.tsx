@@ -22,6 +22,7 @@ import {
   listPackingTemplatesFromSupabase,
   savePackingTemplateToSupabase
 } from "@/lib/supabase/repositories/bom-packing";
+import { getLocalSession } from "@/lib/local-auth";
 
 export default function PackingTemplatesPage() {
   const { inventoryItems, addActivityLog } = useApp();
@@ -31,6 +32,7 @@ export default function PackingTemplatesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const packagingItems = inventoryItems.filter(item => item.category === "packaging" && !item.isArchived);
+  const actorName = getLocalSession()?.username ?? "System";
 
   useEffect(() => {
     let active = true;
@@ -68,7 +70,7 @@ export default function PackingTemplatesPage() {
     setLoadError(null);
     try {
       await savePackingTemplateToSupabase(template);
-      addActivityLog({ actorName: "Admin", action: `Packing template saved: ${template.name}`, entityType: "packing_template", entityId: template.id });
+      addActivityLog({ actorName, action: `Packing template saved: ${template.name}`, entityType: "packing_template", entityId: template.id });
       return true;
     } catch (error) {
       setLoadError(formatSupabaseOperationalError(error));
@@ -97,7 +99,7 @@ export default function PackingTemplatesPage() {
     const next = { ...template, id: makeOpId("pt"), name: `${template.name} Copy`, status: "active" as const, materials: template.materials.map(line => ({ ...line, id: makeOpId("pt-line") })) };
     if (await persistTemplate(next)) {
       saveTemplatesState([next, ...templates]);
-      addActivityLog({ actorName: "Admin", action: `Packing template duplicated: ${template.name}`, entityType: "packing_template", entityId: next.id });
+      addActivityLog({ actorName, action: `Packing template duplicated: ${template.name}`, entityType: "packing_template", entityId: next.id });
     }
   };
 
@@ -107,7 +109,7 @@ export default function PackingTemplatesPage() {
     try {
       await archivePackingTemplateInSupabase(template);
       updateTemplate(template.id, { status: "archived" });
-      addActivityLog({ actorName: "Admin", action: `Packing template archived: ${template.name}`, entityType: "packing_template", entityId: template.id });
+      addActivityLog({ actorName, action: `Packing template archived: ${template.name}`, entityType: "packing_template", entityId: template.id });
     } catch (error) {
       setLoadError(formatSupabaseOperationalError(error));
     } finally {
@@ -159,7 +161,7 @@ export default function PackingTemplatesPage() {
                   onDone={async () => {
                     if (await persistTemplate(template)) {
                       setEditingId(null);
-                      addActivityLog({ actorName: "Admin", action: `Packing template edited: ${template.name}`, entityType: "packing_template", entityId: template.id });
+                      addActivityLog({ actorName, action: `Packing template edited: ${template.name}`, entityType: "packing_template", entityId: template.id });
                     }
                   }}
                   isSaving={isSaving}

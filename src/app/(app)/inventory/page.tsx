@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { ArrowDownAZ, Plus, Search, ArrowUpZA, Eye, EyeOff, Boxes, ChartBar, ClipboardList, PackageCheck, Download, Upload } from "lucide-react";
+import { ArrowDownAZ, Plus, Search, ArrowUpZA, Eye, EyeOff, Boxes, ChartBar, ClipboardList, PackageCheck, Download, Upload, RefreshCw } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,8 @@ export default function InventoryPage() {
     archiveInventoryItem,
     inventorySource,
     inventoryError,
+    lastInventorySync,
+    refreshInventoryItems,
     importLocalInventoryBackup,
     exportInventoryBackup
   } = useApp();
@@ -33,6 +35,7 @@ export default function InventoryPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [importSummary, setImportSummary] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Active (non-archived) items calculations for counters
   const activeItemsList = useMemo(() => inventoryItems.filter(item => !item.isArchived), [inventoryItems]);
@@ -145,6 +148,12 @@ export default function InventoryPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshInventoryItems();
+    setIsRefreshing(false);
+  };
+
   return (
     <AppShell>
       <p className="text-label-sm uppercase text-primary">Operations hub</p>
@@ -228,6 +237,28 @@ export default function InventoryPage() {
       {(inventoryError || importSummary) && (
         <div className="mt-2 rounded-md border border-outline-variant/25 bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant">
           {inventoryError ?? importSummary}
+        </div>
+      )}
+
+      {/* Sync status row — visible only when Supabase is active */}
+      {inventorySource === "supabase" && (
+        <div className="mt-2 flex items-center justify-between rounded-md border border-outline-variant/20 bg-surface-container px-3 py-1.5">
+          <p className="text-[11.5px] text-on-surface-variant">
+            {lastInventorySync
+              ? `Inventory synced ${formatRelativeTime(lastInventorySync)}`
+              : "Inventory not yet synced"}
+          </p>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 gap-1 px-2 text-[11px] text-primary"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            aria-label="Refresh inventory from server"
+          >
+            <RefreshCw className={cn("h-3 w-3", isRefreshing && "animate-spin")} />
+            {isRefreshing ? "Syncing..." : "Refresh"}
+          </Button>
         </div>
       )}
 

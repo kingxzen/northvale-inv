@@ -1,0 +1,157 @@
+"use client";
+
+import { createClient } from "@/lib/supabase/browser";
+import { hasSupabaseConfig } from "@/lib/supabase/config";
+import type { Product, ProductBomLine } from "@/types/domain";
+
+export function isSupabaseConfigured() {
+  return hasSupabaseConfig();
+}
+
+export async function listProductsFromSupabase(): Promise<{ products: Product[], bomLines: ProductBomLine[] }> {
+  if (!isSupabaseConfigured()) throw new Error("Supabase is not configured");
+  const supabase = createClient();
+  
+  // We fetch products and their UUIDs so we can map them back to legacy_ids
+  const { data: productsData, error: productsError } = await supabase
+    .from("products")
+    .select("*, inventory_items!products_finished_good_item_id_fkey(legacy_id, id)");
+    
+  if (productsError) throw productsError;
+  
+  const { data: linesData, error: linesError } = await supabase
+    .from("product_bom_lines")
+    .select("*, products(legacy_id, id), inventory_items(legacy_id, id)");
+    
+  if (linesError) throw linesError;
+  
+  const products: Product[] = (productsData || []).map(row => {
+    // Attempt to map finishedGoodItemId back to legacy ID if available
+    const fgItem = Array.isArray(row.inventory_items) ? row.inventory_items[0] : row.inventory_items;
+    const fgItemId = fgItem ? (fgItem.legacy_id || fgItem.id) : row.finished_good_item_id;
+
+    return {
+      id: row.legacy_id ?? row.id,
+      sku: row.sku,
+      name: row.name,
+      outputUnit: row.output_unit as any,
+      batchSize: Number(row.batch_size),
+      finishedGoodItemId: fgItemId,
+      brand: row.brand || undefined,
+      scent: row.scent || undefined,
+      family: row.family || undefined,
+      category: row.category || undefined,
+      notes: row.notes || undefined,
+      isArchived: row.is_archived
+    };
+  });
+  
+  const bomLines: ProductBomLine[] = (linesData || []).map(row => {
+    const prod = Array.isArray(row.products) ? row.products[0] : row.products;
+    const prodId = prod ? (prod.legacy_id || prod.id) : row.product_id;
+    
+    const invItem = Array.isArray(row.inventory_items) ? row.inventory_items[0] : row.inventory_items;
+    const invItemId = invItem ? (invItem.legacy_id || invItem.id) : row.inventory_item_id;
+
+    return {
+      id: row.legacy_id ?? row.id,
+      productId: prodId,
+      inventoryItemId: invItemId || undefined,
+      quantityPerBatch: Number(row.quantity_per_batch),
+      unit: row.unit,
+      lineType: row.line_type as any,
+      costOverride: row.cost_override === null ? undefined : Number(row.cost_override),
+      wastagePercent: row.wastage_percent === null ? undefined : Number(row.wastage_percent),
+      notes: row.notes || undefined
+    };
+  });
+
+  return { products, bomLines };
+}
+
+export async function saveProductToSupabase(product: Product): Promise<Product> {
+  if (!isSupabaseConfigured()) throw new Error("Supabase is not configured");
+  const supabase = createClient();
+
+  // We need the internal UUID for finished_good_item_id
+  const { data: invItem } = await supabase
+    .from("inventory_items")
+    .select("id")
+    .or(`id.eq.${product.finishedGoodItemId},legacy_id.eq.${product.finishedGoodItemId}`)
+    .single();
+
+  if (!invItem) throw new Error("Finished good inventory item not found in Supabase.");
+
+  const payload = {
+    legacy_id: product.id,
+    sku: product.sku,
+    name: product.name,
+    output_unit: product.outputUnit,
+    batch_size: product.batchSize,
+    finished_good_item_id: invItem.id,
+    brand: product.brand || null,
+    scent: product.scent || null,
+    family: product.family || null,
+    category: product.category || null,
+    notes: product.notes || null,
+    is_archived: product.isArchived ?? false
+  };
+
+  const { data, error } = await supabase
+    .from("products")
+    .upsert(payload, { onConflict: "legacy_id" })
+    .select("*")
+    .single();
+
+  if (error) throw error;
+  
+  return product;
+}
+
+export async function saveProductBomLinesToSupabase(productId: string, lines: ProductBomLine[]): Promise<void> {
+  if (!isSupabaseConfigured()) throw new Error("Supabase is not configured");
+  const supabase = createClient();
+
+  // First, get the product's UUID
+  const { data: prod } = await supabase
+    .from("products")
+    .select("id")
+    .or(`id.eq.${productId},legacy_id.eq.${productId}`)
+    .single();
+
+  if (!prod) throw new Error("Product not found in Supabase.");
+
+  // For inventory items, we need to map their legacy IDs to UUIDs
+  const linePayloads = [];
+  for (const line of lines) {
+    let invItemId = null;
+    if (line.inventoryItemId) {
+      const { data: inv } = await supabase
+        .from("inventory_items")
+        .select("id")
+        .or(`id.eq.${line.inventoryItemId},legacy_id.eq.${line.inventoryItemId}`)
+        .single();
+      if (inv) invItemId = inv.id;
+    }
+
+    linePayloads.push({
+      legacy_id: line.id,
+      product_id: prod.id,
+      inventory_item_id: invItemId,
+      quantity_per_batch: line.quantityPerBatch,
+      unit: line.unit,
+      line_type: line.lineType,
+      cost_override: line.costOverride || null,
+      wastage_percent: line.wastagePercent || null,
+      notes: line.notes || null
+    });
+  }
+
+  // Delete existing lines
+  await supabase.from("product_bom_lines").delete().eq("product_id", prod.id);
+
+  if (linePayloads.length > 0) {
+    const { error } = await supabase.from("product_bom_lines").insert(linePayloads);
+    if (error) throw error;
+  }
+}

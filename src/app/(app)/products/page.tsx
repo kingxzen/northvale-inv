@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Product, ProductBomLine } from "@/types/domain";
+import { getLocalSession } from "@/lib/local-auth";
 
 export default function ProductsPage() {
   const {
@@ -38,6 +39,8 @@ export default function ProductsPage() {
     updateProductBom,
     addActivityLog
   } = useApp();
+
+  const actorName = getLocalSession()?.username ?? "System";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
@@ -242,7 +245,7 @@ export default function ProductsPage() {
     }
 
     addActivityLog({
-      actorName: "Mara Santos",
+      actorName,
       action: `Copied BOM from product ${copySourceProductId} to ${selectedProduct.name}`,
       entityType: "product",
       entityId: selectedProduct.id

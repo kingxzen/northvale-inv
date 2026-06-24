@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useRef, useState, useMemo } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Database, Download, Filter, PackageSearch, Search, TrendingUp, History, Upload, FileDown, ShieldAlert } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -16,8 +16,9 @@ import {
   getLogisticsExpenses,
   getPackingTemplates,
   getProductBomAssignments,
-  getQuickOrders
+  type QuickOrderRecord
 } from "@/lib/operations-store";
+import { listQuickOrdersFromSupabase } from "@/lib/supabase/repositories/quick-orders";
 import { createClient } from "@/lib/supabase/browser";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { isSupabaseConfigured } from "@/lib/supabase/repositories/inventory";
@@ -104,6 +105,8 @@ export default function ReportsPage() {
   const [pendingBackup, setPendingBackup] = useState<FullBackup | null>(null);
   const [backupDownloaded, setBackupDownloaded] = useState(false);
   const [freshStartText, setFreshStartText] = useState("");
+  const [showLogisticsModal, setShowLogisticsModal] = useState(false);
+  const [quickOrders, setQuickOrders] = useState<QuickOrderRecord[]>([]);
   const [freshStartBusy, setFreshStartBusy] = useState(false);
   const [freshStartResult, setFreshStartResult] = useState<string | null>(null);
   const [restoreMode, setRestoreMode] = useState<RestoreMode>("safe-merge");
@@ -120,6 +123,14 @@ export default function ReportsPage() {
   const appEnvironment = typeof window !== "undefined" && window.location.hostname.includes("localhost") ? "Local" : "Production";
   const projectRef = getSupabaseProjectRef();
   const dataSource = supabaseConnected ? "Supabase" : "Local only";
+
+  useEffect(() => {
+    let active = true;
+    listQuickOrdersFromSupabase().then(records => {
+      if (active) setQuickOrders(records);
+    }).catch(console.error);
+    return () => { active = false; };
+  }, []);
 
   const lowStock = useMemo(() => 
     inventoryItems.filter((item) => !item.isArchived && item.reorderPoint > 0 && (item.status === "critical" || item.status === "low")),
@@ -161,7 +172,7 @@ export default function ReportsPage() {
       return acc;
     }, { raw: 0, packaging: 0, labor: 0, other: 0, total: 0 });
 
-    getQuickOrders().forEach((order) => {
+    quickOrders.forEach((order) => {
       const dateValue = order.processedAt ?? order.packedAt ?? order.completedAt ?? order.createdAt;
       const created = new Date(dateValue);
       if (created < start || created > end) return;
@@ -265,7 +276,7 @@ export default function ReportsPage() {
   }, [activeFilter, consumptionType, expenseSummary.labor, expenseSummary.other, expenseSummary.packaging, expenseSummary.raw, inventoryItems, reportSearch, stockTransactions]);
 
   const buildFullBackup = async (): Promise<FullBackup> => {
-    const quickOrders = getQuickOrders();
+    const quickOrdersToProcess = quickOrders;
     const bomLibrary = supabaseConnected ? await listMasterBomsFromSupabase() : getMasterBoms();
     const packingTemplates = supabaseConnected ? await listPackingTemplatesFromSupabase() : getPackingTemplates();
 
@@ -850,7 +861,7 @@ export default function ReportsPage() {
           <Button size="sm" variant="ghost" className="h-9 gap-1 border border-outline-variant/25 px-1.5 text-[11px]" onClick={() => downloadCsv("northvale-transactions.csv", ["id", "item_id", "type", "quantity", "unit", "reference", "created_at"], stockTransactions.map(txn => [txn.id, txn.inventoryItemId, txn.type, txn.quantity, txn.unit, txn.reference ?? "", txn.createdAt]))}>
             <FileDown className="h-3.5 w-3.5" /> Export Transactions CSV
           </Button>
-          <Button size="sm" variant="ghost" className="h-9 gap-1 border border-outline-variant/25 px-1.5 text-[11px]" onClick={() => downloadCsv("northvale-quick-orders.csv", ["id", "platform", "reference", "status", "prepared_by", "processed_at", "completed_at"], getQuickOrders().map(order => [order.id, order.platform, order.referenceNo, order.status, order.preparedBy, order.processedAt ?? "", order.completedAt ?? ""]))}>
+          <Button size="sm" variant="ghost" className="h-9 gap-1 border border-outline-variant/25 px-1.5 text-[11px]" onClick={() => downloadCsv("northvale-quick-orders.csv", ["id", "platform", "reference", "status", "prepared_by", "processed_at", "completed_at"], quickOrders.map(order => [order.id, order.platform, order.referenceNo, order.status, order.preparedBy, order.processedAt ?? "", order.completedAt ?? ""]))}>
             <FileDown className="h-3.5 w-3.5" /> Export Quick Orders CSV
           </Button>
           <Button size="sm" variant="ghost" className="h-9 gap-1 border border-outline-variant/25 px-1.5 text-[11px]" onClick={() => downloadCsv("northvale-production.csv", ["id", "job_number", "status", "planned_batch_qty", "due_date", "reference"], productionJobs.map(job => [job.id, job.jobNumber, job.status, job.plannedBatchQty, job.dueDate ?? "", job.referenceNote ?? ""]))}>

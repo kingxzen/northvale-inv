@@ -170,6 +170,7 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
 
   // Alert Banner State
   const [banner, setBanner] = useState<{ message: string; type: "success" | "info" | "error" } | null>(null);
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
 
   // Sync state for Product specs & BOM editor
   useEffect(() => {
@@ -319,7 +320,8 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
 
   // 1. Save Product Details
   const handleSaveProductProfile = () => {
-    if (!product) return;
+    if (!product || isSavingProduct) return;
+    setIsSavingProduct(true);
     const combinedName = `${editBrand} ${editName} ${editScent}`.trim();
     updateProduct(product.id, {
       brand: editBrand,
@@ -332,8 +334,12 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
       outputUnit: editOutputUnit as any,
       notes: editNotes
     });
-    setIsEditProductOpen(false);
-    triggerBanner("Product profile specifications updated.");
+    
+    setTimeout(() => {
+      setIsEditProductOpen(false);
+      setIsSavingProduct(false);
+      triggerBanner("Product profile specifications updated.");
+    }, 150);
   };
 
   // 2. Duplicate Product
@@ -1547,7 +1553,9 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
 
             <div className="flex gap-3 justify-end pt-4 border-t border-outline-variant/20 mt-6">
               <Button variant="ghost" onClick={() => setIsEditProductOpen(false)}>Cancel</Button>
-              <Button onClick={handleSaveProductProfile}>Save Specifications</Button>
+              <Button onClick={handleSaveProductProfile} disabled={isSavingProduct}>
+                {isSavingProduct ? "Saving..." : "Save Specifications"}
+              </Button>
             </div>
           </Card>
         </div>

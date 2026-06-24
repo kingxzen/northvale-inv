@@ -24,6 +24,7 @@ import {
   saveMasterBomToSupabase
 } from "@/lib/supabase/repositories/bom-packing";
 import type { InventoryUnit } from "@/types/domain";
+import { getLocalSession } from "@/lib/local-auth";
 
 const units: InventoryUnit[] = ["kg", "g", "liter", "ml", "gallon", "pcs"];
 
@@ -34,6 +35,7 @@ export default function BomLibraryPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const actorName = getLocalSession()?.username ?? "System";
 
   useEffect(() => {
     let active = true;
@@ -71,7 +73,7 @@ export default function BomLibraryPage() {
     setLoadError(null);
     try {
       await saveMasterBomToSupabase(bom);
-      addActivityLog({ actorName: "Admin", action: `Manufacturing BOM saved: ${bom.name}`, entityType: "bom", entityId: bom.id });
+      addActivityLog({ actorName, action: `Manufacturing BOM saved: ${bom.name}`, entityType: "bom", entityId: bom.id });
       return true;
     } catch (error) {
       setLoadError(formatSupabaseOperationalError(error));
@@ -107,7 +109,7 @@ export default function BomLibraryPage() {
     };
     if (await persistBom(next)) {
       saveBomsState([next, ...boms]);
-      addActivityLog({ actorName: "Admin", action: `Manufacturing BOM duplicated: ${bom.name}`, entityType: "bom", entityId: next.id });
+      addActivityLog({ actorName, action: `Manufacturing BOM duplicated: ${bom.name}`, entityType: "bom", entityId: next.id });
     }
   };
 
@@ -117,7 +119,7 @@ export default function BomLibraryPage() {
     try {
       await archiveMasterBomInSupabase(bom);
       updateBom(bom.id, { status: "archived" });
-      addActivityLog({ actorName: "Admin", action: `Manufacturing BOM archived: ${bom.name}`, entityType: "bom", entityId: bom.id });
+      addActivityLog({ actorName, action: `Manufacturing BOM archived: ${bom.name}`, entityType: "bom", entityId: bom.id });
     } catch (error) {
       setLoadError(formatSupabaseOperationalError(error));
     } finally {
@@ -175,7 +177,7 @@ export default function BomLibraryPage() {
                   onDone={async () => {
                     if (await persistBom(bom)) {
                       setEditingId(null);
-                      addActivityLog({ actorName: "Admin", action: `Manufacturing BOM edited: ${bom.name}`, entityType: "bom", entityId: bom.id });
+                      addActivityLog({ actorName, action: `Manufacturing BOM edited: ${bom.name}`, entityType: "bom", entityId: bom.id });
                     }
                   }}
                   isSaving={isSaving}

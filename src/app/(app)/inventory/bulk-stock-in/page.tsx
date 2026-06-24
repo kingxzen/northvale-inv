@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SearchableInventoryPicker } from "@/components/ui/searchable-inventory-picker";
 import { useApp } from "@/context/app-context";
 import { getLogisticsExpenses, makeOpId, saveLogisticsExpenses } from "@/lib/operations-store";
+import { getLocalSession } from "@/lib/local-auth";
 
 type BulkLine = {
   id: string;
@@ -54,6 +55,7 @@ export default function BulkStockInPage() {
     }
 
     const batchRef = reference.trim() || `BULK-${new Date().toISOString().slice(0, 10)}`;
+    const actorName = getLocalSession()?.username ?? "System";
     validLines.forEach((line) => {
       const item = inventoryItems.find(entry => entry.id === line.inventoryItemId);
       if (!item) return;
@@ -70,7 +72,7 @@ export default function BulkStockInPage() {
         reason: `Bulk stock in${supplier ? ` from ${supplier}` : ""}${pickedUpBy ? ` picked up by ${pickedUpBy}` : ""}`
       });
       addActivityLog({
-        actorName: "Admin",
+        actorName,
         action: `Bulk stock-in ${line.quantity} ${item.unit} of ${item.name}`,
         entityType: "inventory_item",
         entityId: item.id
@@ -91,7 +93,7 @@ export default function BulkStockInPage() {
         ...getLogisticsExpenses()
       ]);
       addActivityLog({
-        actorName: "Admin",
+        actorName,
         action: `Logged logistics expense ${expense} for bulk stock-in ${batchRef}`,
         entityType: "logistics_expense",
         entityId: batchRef

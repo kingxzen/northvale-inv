@@ -1,6 +1,6 @@
 "use client";
 
-import { Boxes, CheckCircle2, CircleSlash, Clock3, FlaskConical, PackageMinus, PackageSearch } from "lucide-react";
+import { Boxes, CheckCircle2, CircleSlash, Clock3, FlaskConical, Info, PackageMinus, PackageSearch } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 export default function DashboardPage() {
-  const { inventoryItems, locations, productionJobs, stockTransactions, activityLogs } = useApp();
+  const { inventoryItems, inventorySource, locations, productionJobs, stockTransactions, activityLogs } = useApp();
   const todayKey = getDateKey(new Date());
   const [checkInAnswer, setCheckInAnswer] = useState<"yes" | "no" | null>(null);
 
@@ -55,6 +55,17 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
+      {/* Data isolation notice — shown when Supabase is active to clarify which data is shared */}
+      {inventorySource === "supabase" && (
+        <section className="mb-3 flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-[11.5px] text-on-surface-variant">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+          <p className="leading-4">
+            <span className="font-semibold text-primary">Inventory items</span> are shared across all users via the cloud.
+            {" "}<span className="font-semibold text-on-surface">Production plans, quick orders, and BOMs</span> are stored on this device only.
+            {" "}Use <span className="font-semibold text-primary">Backup &amp; Restore</span> to sync between devices.
+          </p>
+        </section>
+      )}
       <section className="mb-3 flex items-center gap-2 rounded-lg border border-outline-variant/20 bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant">
         <Clock3 className="h-4 w-4 shrink-0 text-primary" />
         <p className="min-w-0 truncate">

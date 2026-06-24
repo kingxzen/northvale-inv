@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useApp } from "@/context/app-context";
 import { cn, formatMoney } from "@/lib/utils";
-import { appendOrderLog, getQuickOrders, saveQuickOrders, type QuickOrderRecord } from "@/lib/operations-store";
+import { appendOrderLog, type QuickOrderRecord } from "@/lib/operations-store";
+import { listQuickOrdersFromSupabase, saveQuickOrderToSupabase } from "@/lib/supabase/repositories/quick-orders";
 
 type RangeMode = "Today" | "This week" | "This month" | "Custom";
 
@@ -50,13 +51,36 @@ export default function QuickOrdersPage() {
   const [message, setMessage] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState<{ type: "process" | "complete"; order: QuickOrderRecord } | null>(null);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    setOrders(getQuickOrders());
+    let active = true;
+    async function fetchOrders() {
+      try {
+        const records = await listQuickOrdersFromSupabase();
+        if (active) setOrders(records);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+    void fetchOrders();
+    return () => { active = false; };
   }, []);
 
   const updateOrders = (next: QuickOrderRecord[]) => {
     setOrders(next);
-    saveQuickOrders(next);
+    // Find what changed and sync to Supabase (optimistic)
+    // Actually it's easier to just sync the mutated order
+  };
+
+  const syncOrder = async (order: QuickOrderRecord) => {
+    try {
+      await saveQuickOrderToSupabase(order);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const setPreset = (nextRange: Exclude<RangeMode, "Custom">) => {
@@ -120,6 +144,7 @@ export default function QuickOrdersPage() {
     const deducted = deductOrder(order);
     const nextOrder = appendOrderLog({ ...deducted, status: "processed", processedAt: deducted.processedAt ?? new Date().toISOString(), processedBy: actor }, `Order ${order.referenceNo || order.id} processed`, actor);
     updateOrders(orders.map(item => item.id === order.id ? nextOrder : item));
+    syncOrder(nextOrder);
     addActivityLog({ actorName: actor, action: `Quick Order processed: ${order.referenceNo || order.id}`, entityType: "quick_order", entityId: order.id });
     flash("Order processed/packed. Deduction guarded against repeats.");
   };
@@ -138,6 +163,7 @@ export default function QuickOrdersPage() {
     const deducted = deductOrder(order);
     const nextOrder = appendOrderLog({ ...deducted, status: "completed", completedAt: new Date().toISOString(), completedBy: actor }, `Order ${order.referenceNo || order.id} completed`, actor);
     updateOrders(orders.map(item => item.id === order.id ? nextOrder : item));
+    syncOrder(nextOrder);
     addActivityLog({ actorName: actor, action: `Quick Order completed: ${order.referenceNo || order.id}`, entityType: "quick_order", entityId: order.id });
     flash(order.inventoryDeducted ? "Order completed. Inventory was not deducted again." : "Order completed and inventory deducted once.");
   };
