@@ -326,10 +326,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [activityLogs, hydrated]);
 
   
-  const syncProductToSupabase = (product: Product, bomLines?: ProductBomLine[]) => {
+  const syncProductToSupabase = async (product: Product, bomLines?: ProductBomLine[]) => {
     if (inventorySource !== "supabase" || !isSupabaseConfigured()) return;
-    saveProductToSupabase(product).catch(console.error);
-    if (bomLines) saveProductBomLinesToSupabase(product.id, bomLines).catch(console.error);
+    try {
+      await saveProductToSupabase(product);
+      if (bomLines) {
+        await saveProductBomLinesToSupabase(product.id, bomLines);
+      }
+    } catch (error) {
+      console.error("Failed to sync product to Supabase:", error);
+      triggerBanner(`Failed to save product to database: ${error instanceof Error ? error.message : String(error)}`, "error");
+    }
   };
   const syncProductionJobToSupabase = (job: ProductionJob) => {
     if (inventorySource !== "supabase" || !isSupabaseConfigured()) return;
