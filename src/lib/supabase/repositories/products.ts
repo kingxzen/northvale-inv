@@ -112,13 +112,30 @@ export async function saveProductToSupabase(product: Product): Promise<Product> 
     is_archived: product.isArchived ?? false
   };
 
-  const { data, error } = await supabase
-    .from("products")
-    .upsert(payload, { onConflict: "legacy_id" })
-    .select("*")
-    .single();
+  let existing = null;
+  if (isUuid(product.id)) {
+    const { data } = await supabase.from("products").select("id").or(`id.eq.${product.id},legacy_id.eq.${product.id}`).maybeSingle();
+    existing = data;
+  } else {
+    const { data } = await supabase.from("products").select("id").eq("legacy_id", product.id).maybeSingle();
+    existing = data;
+  }
 
-  if (error) throw new Error(`Product upsert error: ${error.message} - ${error.details || ''}`);
+  let error;
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from("products")
+      .update(payload)
+      .eq("id", existing.id);
+    error = updateError;
+  } else {
+    const { error: insertError } = await supabase
+      .from("products")
+      .insert(payload);
+    error = insertError;
+  }
+
+  if (error) throw new Error(`Product save error: ${error.message} - ${error.details || ''}`);
   
   return product;
 }
