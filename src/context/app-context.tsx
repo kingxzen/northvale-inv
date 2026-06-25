@@ -335,7 +335,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error("Failed to sync product to Supabase:", error);
-      triggerBanner(`Failed to save product to database: ${error instanceof Error ? error.message : String(error)}`, "error");
+      const msg = error instanceof Error ? error.message : String(error);
+      setInventoryError(`Failed to save product to database: ${msg}`);
+      if (typeof window !== 'undefined') {
+        window.alert(`DATABASE SAVE ERROR!\n\nThe product profile or BOM failed to save to Supabase.\n\nReason:\n${msg}\n\nPlease take a screenshot of this error and show it to the AI.`);
+      }
     }
   };
   const syncProductionJobToSupabase = (job: ProductionJob) => {

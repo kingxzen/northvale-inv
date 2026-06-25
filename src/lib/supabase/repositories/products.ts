@@ -79,12 +79,23 @@ export async function saveProductToSupabase(product: Product): Promise<Product> 
   // We need the internal UUID for finished_good_item_id
   const fgItemId = product.finishedGoodItemId;
   const fgQuery = supabase.from("inventory_items").select("id");
-  const { data: invItem } = await (isUuid(fgItemId)
-    ? fgQuery.or(`id.eq.${fgItemId},legacy_id.eq.${fgItemId}`)
-    : fgQuery.eq("legacy_id", fgItemId)
-  ).single();
+  
+  let invItem = null;
+  for (let i = 0; i < 3; i++) {
+    const { data } = await (isUuid(fgItemId)
+      ? fgQuery.or(`id.eq.${fgItemId},legacy_id.eq.${fgItemId}`)
+      : fgQuery.eq("legacy_id", fgItemId)
+    ).maybeSingle();
 
-  if (!invItem) throw new Error("Finished good inventory item not found in Supabase.");
+    if (data) {
+      invItem = data;
+      break;
+    }
+    // Wait 500ms before retrying in case the inventory item is still being created asynchronously
+    await new Promise(res => setTimeout(res, 500));
+  }
+
+  if (!invItem) throw new Error(`Finished good inventory item not found in Supabase (ID: ${fgItemId}).`);
 
   const payload = {
     legacy_id: product.id,
@@ -107,7 +118,7 @@ export async function saveProductToSupabase(product: Product): Promise<Product> 
     .select("*")
     .single();
 
-  if (error) throw error;
+  if (error) throw new Error(`Product upsert error: ${error.message} - ${error.details || ''}`);
   
   return product;
 }
@@ -131,10 +142,11 @@ export async function saveProductBomLinesToSupabase(productId: string, lines: Pr
     let invItemId = null;
     if (line.inventoryItemId) {
       const itemQuery = supabase.from("inventory_items").select("id");
-      const { data: inv } = await (isUuid(line.inventoryItemId)
+      const { data: inv, error: invError } = await (isUuid(line.inventoryItemId)
         ? itemQuery.or(`id.eq.${line.inventoryItemId},legacy_id.eq.${line.inventoryItemId}`)
         : itemQuery.eq("legacy_id", line.inventoryItemId)
-      ).single();
+      ).maybeSingle();
+      if (invError) throw new Error(`BOM Line inventory lookup error: ${invError.message}`);
       if (inv) invItemId = inv.id;
     }
 
@@ -156,7 +168,7 @@ export async function saveProductBomLinesToSupabase(productId: string, lines: Pr
 
   if (linePayloads.length > 0) {
     const { error } = await supabase.from("product_bom_lines").insert(linePayloads);
-    if (error) throw error;
+    if (error) throw new Error(`Product BOM lines insert error: ${error.message} - ${error.details || ''}`);
   }
 }
 

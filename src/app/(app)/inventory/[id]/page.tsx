@@ -71,7 +71,8 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
     duplicateProduct,
     deleteProduct,
     updateProductBom,
-    addActivityLog
+    addActivityLog,
+    inventoryError
   } = useApp();
 
   // Map 'sles' to the actual item id 'item-sles'
@@ -696,6 +697,12 @@ export default function InventoryItemDetailPage({ params }: { params: Promise<{ 
           <button onClick={() => setBanner(null)} className="p-1 hover:bg-white/10 rounded-full">
             <X className="h-4 w-4" />
           </button>
+        </div>
+      )}
+
+      {inventoryError && (
+        <div className="mx-auto max-w-5xl px-4 py-3 mb-4 rounded flex items-center justify-between bg-error/20 border border-error/50 text-error">
+          <span className="font-semibold text-sm">{inventoryError}</span>
         </div>
       )}
 
