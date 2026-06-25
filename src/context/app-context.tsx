@@ -1129,6 +1129,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     setProductionJobs(prev => [duplicate, ...prev]);
+    syncProductionJobToSupabase(duplicate);
     addActivityLog({
       actorName: "Admin",
       action: `Production plan duplicated as draft from ${original.jobNumber}`,
@@ -1141,6 +1142,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const archiveProductionJob = (id: string) => {
     const job = productionJobs.find(entry => entry.id === id);
+    if (job) {
+      syncProductionJobToSupabase({ ...job, isArchived: true });
+    }
     setProductionJobs(prev => prev.map(entry => (
       entry.id === id ? { ...entry, isArchived: true } : entry
     )));
@@ -1155,6 +1159,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const deleteProductionJob = (id: string) => {
     const job = productionJobs.find(entry => entry.id === id);
+    if (job) {
+      syncProductionJobToSupabase({ ...job, isArchived: true });
+    }
     setProductionJobs(prev => prev.map(entry => (
       entry.id === id ? { ...entry, isArchived: true } : entry
     )));
@@ -1202,6 +1209,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const item = inventoryItems.find(entry => entry.id === req.itemId);
       if (!item) return;
       const afterQuantity = Math.max(0, item.quantityOnHand - req.required);
+      const nextStatus = item.category === "asset" ? "active" : helperCalculateStatus(afterQuantity, item.reorderPoint);
+      updateInventoryItemInSupabase(item.id, { quantityOnHand: afterQuantity, status: nextStatus }).catch(console.error);
 
       addStockTransaction({
         inventoryItemId: item.id,
@@ -1223,8 +1232,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
     });
 
+    const updatedJob: ProductionJob = {
+      ...job,
+      status: "to_process",
+      startedAt: job.startedAt ?? new Date().toISOString()
+    };
+    syncProductionJobToSupabase(updatedJob);
+
     setProductionJobs(prev => prev.map(entry => (
-      entry.id === id ? { ...entry, status: "to_process", startedAt: entry.startedAt ?? new Date().toISOString() } : entry
+      entry.id === id ? updatedJob : entry
     )));
 
     addActivityLog({
@@ -1259,6 +1275,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     itemReleases.forEach(release => {
       const item = inventoryItems.find(i => i.id === release.itemId);
       if (item) {
+        const afterQty = Math.max(0, item.quantityOnHand - release.qty);
+        const nextStatus = item.category === "asset" ? "active" : helperCalculateStatus(afterQty, item.reorderPoint);
+        updateInventoryItemInSupabase(item.id, { quantityOnHand: afterQty, status: nextStatus }).catch(console.error);
+
         addStockTransaction({
           inventoryItemId: release.itemId,
           type: "production_consume",
@@ -1314,6 +1334,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         const fgItem = inventoryItems.find(i => i.id === product.finishedGoodItemId);
         if (fgItem) {
+          const nextQty = fgItem.quantityOnHand + qty;
+          const nextStatus = helperCalculateStatus(nextQty, fgItem.reorderPoint);
+          updateInventoryItemInSupabase(fgItem.id, { quantityOnHand: nextQty, status: nextStatus }).catch(console.error);
+
           addStockTransaction({
             inventoryItemId: product.finishedGoodItemId,
             type: "production_output",
@@ -1348,6 +1372,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const fgItem = inventoryItems.find(i => i.id === product.finishedGoodItemId);
       if (fgItem) {
+        const nextQty = fgItem.quantityOnHand + qty;
+        const nextStatus = helperCalculateStatus(nextQty, fgItem.reorderPoint);
+        updateInventoryItemInSupabase(fgItem.id, { quantityOnHand: nextQty, status: nextStatus }).catch(console.error);
+
         addStockTransaction({
           inventoryItemId: product.finishedGoodItemId,
           type: "production_output",
@@ -1385,6 +1413,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       return invItem;
     }));
+
+    const nextQty = Math.max(0, item.quantityOnHand - qty);
+    const nextStatus = item.category === "asset" ? "active" : helperCalculateStatus(nextQty, item.reorderPoint);
+    updateInventoryItemInSupabase(itemId, { quantityOnHand: nextQty, status: nextStatus }).catch(console.error);
 
     // Add transaction
     addStockTransaction({
