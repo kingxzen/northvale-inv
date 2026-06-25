@@ -16,13 +16,15 @@ export async function listProductsFromSupabase(): Promise<{ products: Product[],
   // We fetch products and their UUIDs so we can map them back to legacy_ids
   const { data: productsData, error: productsError } = await supabase
     .from("products")
-    .select("*, inventory_items!products_finished_good_item_id_fkey(legacy_id, id)");
+    .select("*, inventory_items!products_finished_good_item_id_fkey(legacy_id, id)")
+    .order("created_at", { ascending: false });
     
   if (productsError) throw productsError;
   
   const { data: linesData, error: linesError } = await supabase
     .from("product_bom_lines")
-    .select("*, products(legacy_id, id), inventory_items(legacy_id, id)");
+    .select("*, products(legacy_id, id), inventory_items(legacy_id, id)")
+    .order("created_at", { ascending: false });
     
   if (linesError) throw linesError;
   
