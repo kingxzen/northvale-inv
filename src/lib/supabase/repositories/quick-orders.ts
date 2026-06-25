@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/browser";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 import type { QuickOrderRecord } from "@/lib/operations-store";
+import { isUuid } from "@/lib/utils";
 
 export function isSupabaseConfigured() {
   return hasSupabaseConfig();
@@ -115,7 +116,11 @@ export async function saveQuickOrderToSupabase(order: QuickOrderRecord): Promise
     await supabase.from("quick_order_lines").delete().eq("quick_order_id", orderId);
     const linePayloads = [];
     for (const line of order.lines) {
-      const { data: lp } = await supabase.from("products").select("id").or(`id.eq.${line.productId},legacy_id.eq.${line.productId}`).single();
+      const query = supabase.from("products").select("id");
+      const { data: lp } = await (isUuid(line.productId)
+        ? query.or(`id.eq.${line.productId},legacy_id.eq.${line.productId}`)
+        : query.eq("legacy_id", line.productId)
+      ).single();
       if (lp) {
         linePayloads.push({
           legacy_id: line.id,
@@ -136,7 +141,11 @@ export async function saveQuickOrderToSupabase(order: QuickOrderRecord): Promise
     for (const group of order.groups) {
       let tId = null;
       if (group.templateId) {
-        const { data: pt } = await supabase.from("packing_templates").select("id").or(`id.eq.${group.templateId},legacy_id.eq.${group.templateId}`).single();
+        const query = supabase.from("packing_templates").select("id");
+        const { data: pt } = await (isUuid(group.templateId)
+          ? query.or(`id.eq.${group.templateId},legacy_id.eq.${group.templateId}`)
+          : query.eq("legacy_id", group.templateId)
+        ).single();
         if (pt) tId = pt.id;
       }
       groupPayloads.push({
@@ -158,7 +167,11 @@ export async function saveQuickOrderToSupabase(order: QuickOrderRecord): Promise
     for (const mat of order.materials) {
       let invId = null;
       if (mat.inventoryItemId) {
-        const { data: li } = await supabase.from("inventory_items").select("id").or(`id.eq.${mat.inventoryItemId},legacy_id.eq.${mat.inventoryItemId}`).single();
+        const query = supabase.from("inventory_items").select("id");
+        const { data: li } = await (isUuid(mat.inventoryItemId)
+          ? query.or(`id.eq.${mat.inventoryItemId},legacy_id.eq.${mat.inventoryItemId}`)
+          : query.eq("legacy_id", mat.inventoryItemId)
+        ).single();
         if (li) invId = li.id;
       }
       matPayloads.push({

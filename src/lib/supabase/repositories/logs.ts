@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/browser";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 import type { StockTransaction, ActivityLog } from "@/types/domain";
+import { isUuid } from "@/lib/utils";
 
 export function isSupabaseConfigured() {
   return hasSupabaseConfig();
@@ -46,7 +47,11 @@ export async function saveStockTransactionToSupabase(txn: StockTransaction): Pro
 
   let invId = null;
   if (txn.inventoryItemId) {
-    const { data: i } = await supabase.from("inventory_items").select("id").or(`id.eq.${txn.inventoryItemId},legacy_id.eq.${txn.inventoryItemId}`).single();
+    const query = supabase.from("inventory_items").select("id");
+    const { data: i } = await (isUuid(txn.inventoryItemId)
+      ? query.or(`id.eq.${txn.inventoryItemId},legacy_id.eq.${txn.inventoryItemId}`)
+      : query.eq("legacy_id", txn.inventoryItemId)
+    ).single();
     if (i) invId = i.id;
   }
   

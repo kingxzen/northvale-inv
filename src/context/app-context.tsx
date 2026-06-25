@@ -30,7 +30,8 @@ import {
   isSupabaseConfigured,
   type InventoryImportSummary
 } from "@/lib/supabase/repositories/inventory";
-import { listProductsFromSupabase, saveProductToSupabase, saveProductBomLinesToSupabase } from "@/lib/supabase/repositories/products";
+import { createClient } from "@/lib/supabase/browser";
+import { listProductsFromSupabase, saveProductToSupabase, saveProductBomLinesToSupabase, deleteProductFromSupabase } from "@/lib/supabase/repositories/products";
 import { listProductionJobsFromSupabase, saveProductionJobToSupabase } from "@/lib/supabase/repositories/production";
 import { listActivityLogsFromSupabase, listStockTransactionsFromSupabase, saveActivityLogToSupabase, saveStockTransactionToSupabase } from "@/lib/supabase/repositories/logs";
 import {
@@ -138,6 +139,8 @@ interface AppContextType {
   // General transactions and logging
   addStockTransaction: (txn: Omit<StockTransaction, "id" | "createdAt">) => void;
   addActivityLog: (log: Omit<ActivityLog, "id" | "createdAt">) => void;
+  realtimeAlerts: { id: string; message: string; timestamp: string; table: string; type: string }[];
+  dismissRealtimeAlert: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -217,6 +220,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [inventorySource, setInventorySource] = useState<"supabase" | "local">("local");
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [lastInventorySync, setLastInventorySync] = useState<string | null>(null);
+  const [realtimeAlerts, setRealtimeAlerts] = useState<{ id: string; message: string; timestamp: string; table: string; type: string }[]>([]);
+
+  const dismissRealtimeAlert = (id: string) => {
+    setRealtimeAlerts(prev => prev.filter(alert => alert.id !== id));
+  };
 
   // Derive actor name from the current local session so logs show real usernames.
   const actorName = getLocalSession()?.username ?? "System";
@@ -370,6 +378,90 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []); // Empty deps: listener registered once on mount
+
+  // Realtime subscription to database changes
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    const supabase = createClient();
+
+    const refreshAllData = async () => {
+      try {
+        const [invResult, prodResult, jobsResult, txnsResult, logsResult] = await Promise.all([
+          listInventoryItemsFromSupabase().catch((e: any) => { console.error(e); return { items: [] }; }),
+          listProductsFromSupabase().catch((e: any) => { console.error(e); return { products: [], bomLines: [] }; }),
+          listProductionJobsFromSupabase().catch((e: any) => { console.error(e); return []; }),
+          listStockTransactionsFromSupabase().catch((e: any) => { console.error(e); return []; }),
+          listActivityLogsFromSupabase().catch((e: any) => { console.error(e); return []; })
+        ]);
+        
+        if (invResult.items) setInventoryItems(invResult.items);
+        if (prodResult.products) setProducts(prodResult.products);
+        if (prodResult.bomLines) setProductBomLines(prodResult.bomLines);
+        if (jobsResult) setProductionJobs(jobsResult);
+        if (txnsResult) setStockTransactions(txnsResult);
+        if (logsResult) setActivityLogs(logsResult);
+        setLastInventorySync(new Date().toISOString());
+      } catch (error) {
+        console.error("Failed to refresh app data in realtime:", error);
+      }
+    };
+
+    const channel = supabase
+      .channel("public-db-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public" },
+        (payload: any) => {
+          console.log("Realtime change received:", payload);
+          
+          // Refresh state
+          void refreshAllData();
+
+          // Create dynamic alert message
+          const table = payload.table;
+          const type = payload.eventType;
+          let entity = "Data";
+          let detail = "";
+          
+          if (table === "products") {
+            entity = "Product specifications";
+            detail = payload.new?.name || payload.old?.name || "";
+          } else if (table === "inventory_items") {
+            entity = "Inventory stock level/item details";
+            detail = payload.new?.name || payload.old?.name || "";
+          } else if (table === "production_jobs") {
+            entity = "Production job";
+            detail = payload.new?.job_number || payload.old?.job_number || "";
+          } else if (table === "stock_transactions") {
+            entity = "Stock transaction";
+            detail = `${payload.new?.type || ""} (${payload.new?.quantity || ""})`;
+          } else if (table === "activity_logs") {
+            entity = "Activity log entry";
+            detail = payload.new?.action || "";
+          }
+
+          const actionWord = type === "INSERT" ? "added" : type === "UPDATE" ? "updated" : "deleted";
+          const message = `Real-time sync: ${entity} ${actionWord}${detail ? ` - "${detail}"` : ""}`;
+          
+          setRealtimeAlerts(prev => [
+            {
+              id: Math.random().toString(36).substring(2, 9),
+              message,
+              timestamp: new Date().toISOString(),
+              table,
+              type
+            },
+            ...prev.slice(0, 4) // Keep last 5 alerts
+          ]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [hydrated]);
 
   const persistCreatedInventoryItem = (item: InventoryItem & { isArchived?: boolean }) => {
     if (inventorySource !== "supabase" || !isSupabaseConfigured()) return;
@@ -737,8 +829,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
-    const updatedProduct = { ...products.find(p => p.id === id)!, ...updates };
+    const existingProduct = products.find(p => p.id === id);
+    const updatedProduct = { ...existingProduct!, ...updates };
     syncProductToSupabase(updatedProduct);
+    
+    // Also update the linked inventory item if name or sku changed
+    if (existingProduct && existingProduct.finishedGoodItemId && (updates.name !== undefined || updates.sku !== undefined)) {
+      updateInventoryItem(existingProduct.finishedGoodItemId, {
+        name: updates.name ?? existingProduct.name,
+        sku: updates.sku ?? existingProduct.sku
+      });
+    }
+
     setProducts(prev => prev.map(p => {
       if (p.id === id) {
         return { ...p, ...updates };
@@ -762,6 +864,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Soft archive the linked finished good item as well
     const product = products.find(p => p.id === id);
+    if (product) {
+      const archivedProduct = { ...product, isArchived: true };
+      syncProductToSupabase(archivedProduct);
+    }
     if (product?.finishedGoodItemId) {
       archiveInventoryItem(product.finishedGoodItemId);
     }
@@ -813,6 +919,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
     setProductBomLines(prev => [...prev, ...duplicatedBomLines]);
 
+    // SYNC TO SUPABASE!
+    syncProductToSupabase(duplicate, duplicatedBomLines);
+
     addActivityLog({
       actorName: "Mara Santos",
       action: `Product duplicated: ${original.name} to ${newName}`,
@@ -827,6 +936,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setProducts(prev => prev.filter(p => p.id !== id));
     setProductBomLines(prev => prev.filter(line => line.productId !== id));
 
+    // Sync to Supabase
+    deleteProductFromSupabase(id).catch(console.error);
+
     addActivityLog({
       actorName: "Mara Santos",
       action: `Product deleted permanently: ID ${id}`,
@@ -837,16 +949,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // BOM Actions
   const updateProductBom = (productId: string, bomLines: Omit<ProductBomLine, "id" | "productId">[]) => {
+    let newLines: ProductBomLine[] = [];
     // Delete existing bom lines for this product and insert new ones
     setProductBomLines(prev => {
       const filtered = prev.filter(line => line.productId !== productId);
-      const newLines = bomLines.map(line => ({
+      newLines = bomLines.map(line => ({
         ...line,
         id: `bom-${Math.random().toString(36).substring(2, 9)}`,
         productId
       }));
       return [...filtered, ...newLines];
     });
+
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      syncProductToSupabase(product, newLines);
+    }
 
     // Detect which line was added, edited, or deleted for logging
     const oldLinesCount = productBomLines.filter(line => line.productId === productId).length;
@@ -1348,7 +1466,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         completeProductionJob,
         addCompoundToJob,
         addStockTransaction,
-        addActivityLog
+        addActivityLog,
+        realtimeAlerts,
+        dismissRealtimeAlert
       }}
     >
       {children}

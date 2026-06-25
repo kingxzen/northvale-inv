@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/browser";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 import type { ProductionJob } from "@/types/domain";
+import { isUuid } from "@/lib/utils";
 
 export function isSupabaseConfigured() {
   return hasSupabaseConfig();
@@ -71,7 +72,11 @@ export async function saveProductionJobToSupabase(job: ProductionJob): Promise<P
   // Get product UUID
   let prodUuid = null;
   if (job.productId) {
-    const { data: p } = await supabase.from("products").select("id").or(`id.eq.${job.productId},legacy_id.eq.${job.productId}`).single();
+    const query = supabase.from("products").select("id");
+    const { data: p } = await (isUuid(job.productId)
+      ? query.or(`id.eq.${job.productId},legacy_id.eq.${job.productId}`)
+      : query.eq("legacy_id", job.productId)
+    ).single();
     if (p) prodUuid = p.id;
   }
   
@@ -111,7 +116,11 @@ export async function saveProductionJobToSupabase(job: ProductionJob): Promise<P
     await supabase.from("production_product_lines").delete().eq("production_job_id", jobId);
     const linePayloads = [];
     for (const line of job.productLines) {
-      const { data: lp } = await supabase.from("products").select("id").or(`id.eq.${line.productId},legacy_id.eq.${line.productId}`).single();
+      const query = supabase.from("products").select("id");
+      const { data: lp } = await (isUuid(line.productId)
+        ? query.or(`id.eq.${line.productId},legacy_id.eq.${line.productId}`)
+        : query.eq("legacy_id", line.productId)
+      ).single();
       if (lp) {
         linePayloads.push({
           production_job_id: jobId,
@@ -127,7 +136,11 @@ export async function saveProductionJobToSupabase(job: ProductionJob): Promise<P
     await supabase.from("production_additional_materials").delete().eq("production_job_id", jobId);
     const matPayloads = [];
     for (const mat of job.additionalMaterials) {
-      const { data: li } = await supabase.from("inventory_items").select("id").or(`id.eq.${mat.inventoryItemId},legacy_id.eq.${mat.inventoryItemId}`).single();
+      const query = supabase.from("inventory_items").select("id");
+      const { data: li } = await (isUuid(mat.inventoryItemId)
+        ? query.or(`id.eq.${mat.inventoryItemId},legacy_id.eq.${mat.inventoryItemId}`)
+        : query.eq("legacy_id", mat.inventoryItemId)
+      ).single();
       if (li) {
         matPayloads.push({
           production_job_id: jobId,

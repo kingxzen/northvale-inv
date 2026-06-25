@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/browser";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 import type { Product, ProductBomLine } from "@/types/domain";
+import { isUuid } from "@/lib/utils";
 
 export function isSupabaseConfigured() {
   return hasSupabaseConfig();
@@ -74,11 +75,12 @@ export async function saveProductToSupabase(product: Product): Promise<Product> 
   const supabase = createClient();
 
   // We need the internal UUID for finished_good_item_id
-  const { data: invItem } = await supabase
-    .from("inventory_items")
-    .select("id")
-    .or(`id.eq.${product.finishedGoodItemId},legacy_id.eq.${product.finishedGoodItemId}`)
-    .single();
+  const fgItemId = product.finishedGoodItemId;
+  const fgQuery = supabase.from("inventory_items").select("id");
+  const { data: invItem } = await (isUuid(fgItemId)
+    ? fgQuery.or(`id.eq.${fgItemId},legacy_id.eq.${fgItemId}`)
+    : fgQuery.eq("legacy_id", fgItemId)
+  ).single();
 
   if (!invItem) throw new Error("Finished good inventory item not found in Supabase.");
 
@@ -113,11 +115,11 @@ export async function saveProductBomLinesToSupabase(productId: string, lines: Pr
   const supabase = createClient();
 
   // First, get the product's UUID
-  const { data: prod } = await supabase
-    .from("products")
-    .select("id")
-    .or(`id.eq.${productId},legacy_id.eq.${productId}`)
-    .single();
+  const prodQuery = supabase.from("products").select("id");
+  const { data: prod } = await (isUuid(productId)
+    ? prodQuery.or(`id.eq.${productId},legacy_id.eq.${productId}`)
+    : prodQuery.eq("legacy_id", productId)
+  ).single();
 
   if (!prod) throw new Error("Product not found in Supabase.");
 
@@ -126,11 +128,11 @@ export async function saveProductBomLinesToSupabase(productId: string, lines: Pr
   for (const line of lines) {
     let invItemId = null;
     if (line.inventoryItemId) {
-      const { data: inv } = await supabase
-        .from("inventory_items")
-        .select("id")
-        .or(`id.eq.${line.inventoryItemId},legacy_id.eq.${line.inventoryItemId}`)
-        .single();
+      const itemQuery = supabase.from("inventory_items").select("id");
+      const { data: inv } = await (isUuid(line.inventoryItemId)
+        ? itemQuery.or(`id.eq.${line.inventoryItemId},legacy_id.eq.${line.inventoryItemId}`)
+        : itemQuery.eq("legacy_id", line.inventoryItemId)
+      ).single();
       if (inv) invItemId = inv.id;
     }
 
@@ -154,4 +156,20 @@ export async function saveProductBomLinesToSupabase(productId: string, lines: Pr
     const { error } = await supabase.from("product_bom_lines").insert(linePayloads);
     if (error) throw error;
   }
+}
+
+export async function deleteProductFromSupabase(productId: string): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  const supabase = createClient();
+
+  const query = supabase.from("products").select("id");
+  const { data: prod } = await (isUuid(productId)
+    ? query.or(`id.eq.${productId},legacy_id.eq.${productId}`)
+    : query.eq("legacy_id", productId)
+  ).single();
+
+  if (!prod) return;
+
+  const { error } = await supabase.from("products").delete().eq("id", prod.id);
+  if (error) throw error;
 }
