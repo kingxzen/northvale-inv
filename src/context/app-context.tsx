@@ -949,15 +949,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // BOM Actions
   const updateProductBom = (productId: string, bomLines: Omit<ProductBomLine, "id" | "productId">[]) => {
-    let newLines: ProductBomLine[] = [];
-    // Delete existing bom lines for this product and insert new ones
+    const newLines = bomLines.map(line => ({
+      ...line,
+      id: `bom-${Math.random().toString(36).substring(2, 9)}`,
+      productId
+    }));
+
     setProductBomLines(prev => {
       const filtered = prev.filter(line => line.productId !== productId);
-      newLines = bomLines.map(line => ({
-        ...line,
-        id: `bom-${Math.random().toString(36).substring(2, 9)}`,
-        productId
-      }));
       return [...filtered, ...newLines];
     });
 
