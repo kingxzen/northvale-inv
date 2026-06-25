@@ -259,15 +259,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ]);
         if (!active) return;
         
-        if (invResult.items && invResult.items.length > 0) setInventoryItems(invResult.items);
+        if (invResult.items) setInventoryItems(invResult.items);
         setInventoryError(null);
         setLastInventorySync(new Date().toISOString());
 
-        if (prodResult.products && prodResult.products.length > 0) setProducts(prodResult.products);
-        if (prodResult.bomLines && prodResult.bomLines.length > 0) setProductBomLines(prodResult.bomLines);
-        if (jobsResult && jobsResult.length > 0) setProductionJobs(jobsResult);
-        if (txnsResult && txnsResult.length > 0) setStockTransactions(txnsResult);
-        if (logsResult && logsResult.length > 0) setActivityLogs(logsResult);
+        if (prodResult.products) setProducts(prodResult.products);
+        if (prodResult.bomLines) setProductBomLines(prodResult.bomLines);
+        if (jobsResult) setProductionJobs(jobsResult);
+        if (txnsResult) setStockTransactions(txnsResult);
+        if (logsResult) setActivityLogs(logsResult);
       } catch (error) {
         if (!active) return;
         console.error(formatInventorySupabaseError(error));
